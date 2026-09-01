@@ -1,0 +1,26 @@
+{
+  "name": "toolfence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Turn any web app into WebMCP tools — and never let a dangerous tool run without user consent.",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@toolfence/web",
+    "build": "npm run build --workspace=@toolfence/web",
+    "start": "npm run start --workspace=@toolfence/web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit",
+    "lint": "next lint --dir apps/web"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
