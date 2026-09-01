@@ -5,12 +5,12 @@
 import type { BoundTool, ToolResult } from "@toolfence/core";
 import Link from "next/link";
 import { useCallback, useState } from "react";
-import { AuditLogPanel } from "@/components/AuditLogPanel";
-import { ConsentModal } from "@/components/ConsentModal";
-import { InvoiceApp } from "@/components/InvoiceApp";
-import { ToolInspector } from "@/components/ToolInspector";
-import { Button, Card, SectionTitle } from "@/components/ui";
-import { useToolFence } from "@/components/useToolFence";
+import { AuditLogPanel } from "../../components/AuditLogPanel";
+import { ConsentModal } from "../../components/ConsentModal";
+import { InvoiceApp } from "../../components/InvoiceApp";
+import { ToolInspector } from "../../components/ToolInspector";
+import { Button, Card, SectionTitle } from "../../components/ui";
+import { useToolFence } from "../../components/useToolFence";
 
 interface ScriptStep {
   readonly tool: string;
