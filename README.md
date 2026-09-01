@@ -7,10 +7,14 @@ generated tool behind a capability firewall that classifies it as `read`, `write
 stops the destructive ones at a consent dialog.
 
 **[Live demo →](https://toolfence-omega.vercel.app/playground)** ·
-**[On a page we didn't write →](https://toolfence-omega.vercel.app/foreign)** · no API key, no
+**[On two pages we didn't write →](https://toolfence-omega.vercel.app/foreign)** · no API key, no
 sign-in, works in an ordinary browser.
 
-![The playground: an ordinary invoices dashboard on the left, the tools ToolFence generated from it on the right](docs/screenshots/02-playground.png)
+![A scripted agent run on the playground: filter and list run silently, then sending an invoice to a client stops at the consent dialog and is denied](docs/screenshots/00-hero.gif)
+
+*An agent filters the invoices and reads them back without interrupting anyone. Then it tries to send one to a
+client — and stops. Everything above was generated from the dashboard's markup; the dashboard contains no
+ToolFence code.*
 
 ---
 
@@ -90,16 +94,21 @@ the row identifier as a parameter. The identifier column is discovered from `<th
 
 ---
 
-## On a page we didn't write
+## On pages we didn't write
 
-A demo that only works on its author's own app proves very little, so ToolFence ships with a second
-demo it has no relationship with. `apps/web/public/demo-sites/helpdesk.html` is a **Northwind Support
-Desk**: static HTML, no React, no Tailwind, hand-written CSS, a different domain, and — grep it — no
-mention of ToolFence anywhere in the file.
+A demo that only works on its author's own app proves very little, so ToolFence ships with two demos it has
+no relationship with. Neither file mentions ToolFence anywhere — no script tag, no data attribute, not even
+the word — and `packages/core/test/no-references.test.ts` greps both of them on every CI run so that stays
+true.
+
+### `helpdesk.html` — a support desk
+
+A **Northwind Support Desk**: static HTML, no React, hand-written serif CSS, a different domain, and a real
+`<table>` with `<th scope="row">`.
 
 **[Open `/foreign`](https://toolfence-omega.vercel.app/foreign)**, press **Inject ToolFence**, and a
-`<script>` is appended to that document at runtime, exactly the way the bookmarklet on the same page
-does it on a site neither of us has seen. Nine tools appear, generated from markup written for humans:
+`<script>` is appended to that document at runtime, exactly the way the bookmarklet on the same page does it
+on a site neither of us has seen. Nine tools appear, generated from markup written for humans:
 
 | Tool | Capability | Why |
 |---|---|---|
@@ -109,14 +118,43 @@ does it on a site neither of us has seen. Nine tools appear, generated from mark
 | `refund_order_for_ticket` | `destructive` | Moves money |
 | `delete_all_resolved_tickets` | `destructive` | Irreversible |
 
-Six tickets are in that table and there is still exactly one `refund_order_for_ticket`, taking the
-ticket id as a parameter. Nothing in the risk lexicon was tuned for support tickets or refunds; the two
-tools that can cost the user something are the two that stop at the consent dialog.
+Six tickets are in that table and there is still exactly one `refund_order_for_ticket`, taking the ticket id
+as a parameter. Nothing in the risk lexicon was tuned for support tickets or refunds; the two tools that can
+cost the user something are the two that stop at the consent dialog.
 
 ![ToolFence injected into a third-party support desk: the panel, and the consent dialog stopping a refund](docs/screenshots/05-foreign-site.png)
 
-`packages/core/test/foreign-page.test.ts` runs the same injectable entry point against that exact file
-in jsdom, so the claim on this page is checked by CI rather than by a screenshot.
+### `dispatch.html` — and the harder one
+
+The helpdesk still had two things in common with our own demo: a real table and real buttons. The second
+page has neither. **Halden Freight** is a dispatch board with **no `<table>` element in it at all** — the
+board is an ARIA `role="grid"` built from `<div>`s — and **no `<button>` in its rows**: the row actions are
+anchors with `role="button"`. Dark monospace UI, a freight vocabulary, written as if by somebody who never
+reaches for a table tag.
+
+Ten tools come out of it. Six loads × four row actions is 24 controls on the page; they collapse into four
+tools, each taking the load id, which is read from `role="rowheader"` because there is no `<th>` to read.
+
+| Tool | Capability | Why |
+|---|---|---|
+| `list_active_loads`, `read_shift_totals` | `read` | Return information — from a grid that is not a table |
+| `search_loads`, `filter_by_lane` | `read` | Change what is displayed, not what is stored |
+| `track_load`, `hold_load` | `write` | Change state, recoverably |
+| `transfer_load_to_another_carrier` | `destructive` | Transfers ownership |
+| `pay_carrier_for_load` | `destructive` | Moves money |
+| `submit_book_load`, `cancel_all_delayed_shipments` | `destructive` | Commits an order · cancels irreversibly |
+
+![ToolFence injected into a freight dispatch board built from ARIA grid roles rather than table tags](docs/screenshots/06-dispatch-board.png)
+
+Building this page found two real bugs, which is the point of having it. The scanner advertised support for
+`[role='grid']` but only ever looked for `<tr>`, so the board produced no collection at all and its 24 row
+controls stayed ungrouped. And `stripRowIdentity()` took its identity tokens from every cell in the row —
+including the cell holding the buttons — which erased the action name entirely on a grid with one action per
+row. Both are fixed, and both are now regression-tested.
+
+`packages/core/test/foreign-page.test.ts` and `packages/core/test/dispatch-page.test.ts` run the same
+injectable entry point against those exact files in jsdom, so the claims on this page are checked by CI
+rather than by a screenshot.
 
 ### Take it to a site of your own
 
@@ -138,14 +176,19 @@ cd toolfence
 npm install
 
 npm run dev          # http://localhost:3000  → /playground, and /foreign
-npm test             # 46 Vitest tests against a jsdom page
+npm test             # 62 Vitest tests against a jsdom page
 npm run typecheck    # tsc --noEmit for both packages
 npm run build:inject # bundles the injectable public/toolfence.js
 npm run build        # production build (runs build:inject first)
 ```
 
+All three of those run on every push in GitHub Actions — see
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
 No API key is needed for anything above. The optional AI naming pass is the only feature that wants
 one, and the app is fully functional without it.
+
+![The playground: an ordinary invoices dashboard on the left, the tools ToolFence generated from it on the right](docs/screenshots/02-playground.png)
 
 ## Try it with a real agent
 
@@ -177,7 +220,7 @@ one, and the app is fully functional without it.
 |---|---|
 | `types.ts` | Every type in the pipeline: `Candidate`, `ToolSchema`, `Capability`, `BoundTool`, `AuditEntry`, `FirewallPolicy`. Defined up front so each stage has one vocabulary. |
 | `dom.ts` | Accessible-name computation, stable CSS paths, visibility checks, and the native-setter write that React-controlled inputs actually notice. |
-| `scanner.ts` | `scan(document) -> ScanResult`. A pure function: no global state, no DOM writes. Finds collections, row actions, filter bars, forms, summary lists and standalone buttons. |
+| `scanner.ts` | `scan(document) -> ScanResult`. A pure function: no global state, no DOM writes. Finds collections, row actions, filter bars, forms, summary lists and standalone buttons. Rows, cells and headers are matched by ARIA role as well as by tag, so a grid built from `<div>`s reads the same as a `<table>`. |
 | `generator.ts` | `ScanResult -> ToolSchema[]`. Names each tool, writes an agent-readable description, emits a JSON Schema, and builds a declarative `ExecutionPlan`. |
 | `firewall.ts` | `RISK_SIGNALS` (the whole risk lexicon in one constant), `classify()`, and the `Firewall` class: policy resolution, consent gate, session grants, audit log. |
 | `binder.ts` | `ToolSchema -> executable handler`. Re-resolves elements at call time, so React re-renders cannot leave a stale reference. Also produces the "what will change" sentence the modal shows. |
@@ -194,8 +237,9 @@ one, and the app is fully functional without it.
 |---|---|
 | `app/page.tsx` | Landing page: the claim, the problem, the pipeline, how to try it. |
 | `app/playground/page.tsx` | The demo: dashboard + inspector side by side, plus the scripted agent run. |
-| `app/foreign/page.tsx` | The third-party proof: the helpdesk in a frame, an Inject button, and the bookmarklet. |
-| `public/demo-sites/helpdesk.html` | A page ToolFence has no relationship with. Static, framework-free, zero ToolFence references. |
+| `app/foreign/page.tsx` | The third-party proof: either foreign page in a frame, an Inject button, and the bookmarklet. |
+| `public/demo-sites/helpdesk.html` | A page ToolFence has no relationship with. Static, framework-free, a real table, zero ToolFence references. |
+| `public/demo-sites/dispatch.html` | The harder one: an ARIA grid of `<div>`s, row actions as anchors, a freight vocabulary. Also zero references. |
 | `app/api/enrich/route.ts` | AI mode. Returns **501** when `OPENAI_API_KEY` is unset, so the client falls back cleanly. |
 | `components/InvoiceApp.tsx` | The demo product. Plain React. Contains no ToolFence code of any kind. |
 | `components/useToolFence.ts` | The React binding: one firewall per page, `MutationObserver`-driven rescans, consent prompt wiring. |
@@ -244,10 +288,11 @@ confident about — the fail-safe setting for pages the heuristics do not unders
 - **The WebMCP surface is a moving target.** `register.ts` supports both `registerTool` and
   `provideContext` and degrades to a working in-page simulator when neither exists, but it is written
   against a draft API and may need one file's worth of edits when the spec settles.
-- **AI mode is untested against a live key in this repository.** The route, the client, the 501
-  fallback and the "capabilities are never rewritten" rule are all implemented and type-checked, but the
-  author had no API key available while building, so the model round-trip itself has not been run.
-  Heuristic mode is the default and needs nothing.
+- **AI mode has never been run against a live key.** `packages/core/test/enrich.test.ts` drives the whole
+  round trip against a stubbed route — a rewrite being applied, an illegal or colliding name being refused,
+  the 501 fallback, an upstream error, a timeout, and a model that tries to relabel a destructive tool as
+  `read` and fails to. What is untested is the one thing a stub cannot stand in for: the quality of a real
+  model's names. Heuristic mode is the default and needs no key.
 - **No persistence.** The audit log lives in memory for the session. Exporting it is a button; shipping
   it to a server is not implemented.
 

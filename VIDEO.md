@@ -1,6 +1,7 @@
 # Demo video script — 3 minutes 20, second by second
 
 **Format:** screen recording with voice-over. 1600×1000 browser window, no webcam.
+**Length:** about 3:25 with the second foreign page included; cut that beat to reach 3:00 if a limit applies.
 **Rule for the first 15 seconds:** the product is already running and moving before you say a word.
 
 **Before you hit record**
@@ -104,17 +105,22 @@ Then change the `write` policy dropdown to **ask the user**, and tick **Strict m
 
 ---
 
-## 2:45 – 3:05 · The page we didn't write
+## 2:45 – 3:10 · The pages we didn't write
 
 **On screen:** Open `/foreign` in the second tab. Scroll the frame briefly so the support desk reads as
 a different product. Press **Inject ToolFence**. Wait for the panel. Open `refund_order_for_ticket`,
-pick `NW-2041`, press **Call tool**, let the dialog appear, and click **Deny**.
+pick `NW-2041`, press **Call tool**, let the dialog appear, and click **Deny**. Then click the second
+card — **Halden Freight** — press **Inject ToolFence** again, and let the ten tools land.
 
 **Say:**
 > "One more thing, because a demo on your own app proves nothing. This is a static HTML support desk —
 > no React, no Tailwind, no mention of ToolFence in its source. I'm injecting the script the way a
 > bookmarklet would. Nine tools, from markup written for humans. And the refund — a word nothing here
-> was tuned for — still stops."
+> was tuned for — still stops.
+>
+> And this one has no table in it at all. It's a grid of divs with ARIA roles, its buttons are links,
+> and it's about freight. Ten tools, and the ones that move money or cancel a shipment are the ones
+> that stop."
 
 ---
 
@@ -143,6 +149,7 @@ pick `NW-2041`, press **Call tool**, let the dialog appear, and click **Deny**.
 | Denial | Row still present, `denied by user` in the audit log |
 | Audit | An expanded log row showing recorded arguments; policy dropdowns and strict mode |
 | Third-party page | The helpdesk before injection, the panel after it, and the refund stopping at consent |
+| Second third-party page | The dispatch board's ten tools, with `pay_carrier_for_load` marked destructive |
 
 ## Recording notes
 

@@ -2,7 +2,7 @@
 
 **Tagline:** Turn any web app into WebMCP tools — and never let a dangerous tool run without the user's consent.
 
-**Live demo:** https://toolfence-omega.vercel.app/playground · **On a page we didn't write:** https://toolfence-omega.vercel.app/foreign · **Repository:** https://github.com/alekseyrm1-debug/hackathon · **Licence:** MIT
+**Live demo:** https://toolfence-omega.vercel.app/playground · **On two pages we didn't write:** https://toolfence-omega.vercel.app/foreign · **Repository:** https://github.com/alekseyrm1-debug/hackathon · **Licence:** MIT
 
 ---
 
@@ -113,32 +113,51 @@ rather than allowing it. Grouping is what keeps the tool list sane: buttons repe
 collapse into one parameterised tool (`delete_invoice(invoice)`) rather than one tool per row, with the
 identifier column discovered from `<th scope="row">`.
 
-## The demo that is not ours
+## The demos that are not ours
 
-A generator demonstrated only on its author's own app proves the author can write markup the generator
-likes. So the submission includes a second page ToolFence has no relationship with:
-`apps/web/public/demo-sites/helpdesk.html`, a Northwind Support Desk written as static HTML with
-hand-written CSS, no framework, a domain nothing in the risk lexicon was tuned for, and no reference to
-ToolFence anywhere in the file. At `/foreign` it is served in a frame with an **Inject ToolFence**
-button that appends `toolfence.js` to that document at runtime — the same thing the bookmarklet on that
-page does on a site neither we nor you have seen.
+A generator demonstrated only on its author's own app proves the author can write markup the generator likes.
+So the submission includes two pages ToolFence has no relationship with. Neither mentions ToolFence anywhere
+in its source — no script tag, no data attribute, not even the word — and a test greps both of them on every
+CI run so that claim cannot quietly stop being true.
 
-Nine tools come out of it. `list_support_tickets` and `read_desk_summary` read; `search_tickets`,
-`filter_by_priority` and `view_ticket` change only what is displayed; `escalate_ticket` and
-`create_ticket` write; `refund_order_for_ticket` and `delete_all_resolved_tickets` are destructive and
-stop at the dialog. Six tickets sit in that table and there is still exactly one refund tool, taking the
-ticket id as a parameter discovered from `<th scope="row">`. The injectable build is 48 kB with no
-dependencies, and it mounts its panel in a shadow root — which also means `scan()`, which does not cross
-shadow boundaries, cannot see ToolFence's own buttons and turn them into tools.
+`apps/web/public/demo-sites/helpdesk.html` is a Northwind Support Desk: static HTML, hand-written CSS, no
+framework, a domain nothing in the risk lexicon was tuned for. Nine tools come out of it.
+`list_support_tickets` and `read_desk_summary` read; `search_tickets`, `filter_by_priority` and `view_ticket`
+change only what is displayed; `escalate_ticket` and `create_ticket` write; `refund_order_for_ticket` and
+`delete_all_resolved_tickets` are destructive and stop at the dialog. Six tickets sit in that table and there
+is still exactly one refund tool, taking the ticket id as a parameter discovered from `<th scope="row">`.
 
-`packages/core/test/foreign-page.test.ts` runs that same entry point against that same file in jsdom
-and asserts the nine tools, the capability of each, and that a denied refund leaves the page unchanged.
-The claim is in CI, not only in a screenshot.
+`apps/web/public/demo-sites/dispatch.html` is the harder one, because the helpdesk still shared two things
+with our own demo: a real table and real buttons. The Halden Freight dispatch board has **no `<table>`
+element in it at all** — the board is an ARIA `role="grid"` built from `<div>`s — and **no `<button>` in its
+rows**: the row actions are anchors with `role="button"`. The domain is freight, and its dangerous verbs are
+worded the way a dispatcher words them. Ten tools come out of it, with `pay_carrier_for_load`,
+`transfer_load_to_another_carrier`, `submit_book_load` and `cancel_all_delayed_shipments` stopping at the
+dialog, and the 24 row controls on the page collapsing into four tools keyed by `role="rowheader"`.
+
+Writing that second page found two real bugs, which is exactly what it was for. The scanner advertised
+support for `[role='grid']` but only ever looked for `<tr>`, so a div grid produced no collection and no
+grouping; and the row-identity stripper took its tokens from every cell in the row, including the one
+holding the buttons, which erased the action name on a grid with one action per row. Both are fixed and
+regression-tested. A judge who only ever saw the invoices demo would have seen neither.
+
+At `/foreign` both pages are served in a frame with an **Inject ToolFence** button that appends
+`toolfence.js` to that document at runtime — the same thing the bookmarklet on that page does on a site
+neither we nor you have seen. The injectable build is 48 kB with no dependencies, and it mounts its panel in
+a shadow root — which also means `scan()`, which does not cross shadow boundaries, cannot see ToolFence's own
+buttons and turn them into tools.
+
+`foreign-page.test.ts` and `dispatch-page.test.ts` run that same entry point against those same files in
+jsdom and assert the tools, the capability of each, and that a denied refund or a denied carrier payment
+leaves the page unchanged. The claims are in CI, not only in a screenshot: 62 tests, plus a typecheck and a
+production build, on every push.
 
 Two properties are deliberate and worth stating. First, the optional AI naming pass can rewrite tool
 names and descriptions but **cannot** touch a capability, a classification or an execution plan — those
 are copied from the heuristic output, so no model, and no page trying to influence one, can talk a
-destructive tool into looking safe. Second, when `navigator.modelContext` does not exist the page
+destructive tool into looking safe. `enrich.test.ts` proves it by feeding the client a reply that tries:
+the model relabels `delete_invoice` as `read`, hands back its own execution plan and an empty argument
+schema, and the merged tool comes out destructive with its original plan and its required parameter intact. Second, when `navigator.modelContext` does not exist the page
 degrades rather than breaking: it still scans, generates, classifies and logs, and a **Run agent
 script** button replays a three-step agent session through the identical firewall path. Judges opening
 the demo in an ordinary browser see the whole system work.
