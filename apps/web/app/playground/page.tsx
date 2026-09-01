@@ -117,6 +117,12 @@ function TopBar({ controller }: { controller: ToolFenceController }) {
             WebMCP {live ? "live" : "off"}
           </span>
           <Link
+            href="/foreign"
+            className="hidden text-xs font-medium text-[color:var(--color-ink-muted)] hover:text-[color:var(--color-ink)] sm:inline"
+          >
+            On someone else&rsquo;s site →
+          </Link>
+          <Link
             href="/"
             className="hidden text-xs font-medium text-[color:var(--color-ink-muted)] hover:text-[color:var(--color-ink)] sm:inline"
           >

@@ -6,6 +6,11 @@ branch `claude/hackathon-2026-top-10-wz1vg2`). Every push to that branch redeplo
 The repository is an npm workspace. `apps/web` is the deployable Next.js app; `packages/core` is
 compiled in place by `transpilePackages`, so there is no build step to add and no package to publish.
 
+One generated file matters: `apps/web/public/toolfence.js`, the injectable bundle behind `/foreign` and
+the bookmarklet. It is built by `npm run build:inject` (esbuild, no config file) and **is committed**,
+so a Vercel build rooted at `apps/web` — which never runs the workspace root's scripts — still serves a
+current copy. Rebuild and commit it whenever `packages/core` changes.
+
 ## 1. Import the repository
 
 1. Push the branch you want to deploy to GitHub.
@@ -45,7 +50,7 @@ Press **Deploy**. First build is typically 1–2 minutes. Vercel gives you
 
 ## 4. Post-deploy checklist
 
-Run all eight. Items 4 and 5 are the ones that decide the demo.
+Run all nine. Items 4, 5 and 8 are the ones that decide the demo.
 
 1. **Live URL loads.** `https://<project>.vercel.app` returns the landing page with no console errors.
 2. **Playground loads.** `/playground` renders the dashboard and the inspector side by side, and the
@@ -63,7 +68,11 @@ Run all eight. Items 4 and 5 are the ones that decide the demo.
    panel must say AI mode is not configured and the tools must keep working. `curl -X POST
    https://<project>.vercel.app/api/enrich -H 'content-type: application/json' -d '{"tools":[]}'`
    returns `501`, not `500`.
-8. **Mobile and keyboard.** Load `/playground` at 390px wide: the table scrolls horizontally inside its
+8. **The third-party page still works.** Open `/foreign`, press **Inject ToolFence**, and confirm the
+   panel reports nine tools. Open `refund_order_for_ticket`, choose a ticket, press **Call tool**: the
+   consent dialog must appear and **Deny** must leave the ticket unrefunded. Then check
+   `https://<project>.vercel.app/toolfence.js` returns 200 with `content-type: application/javascript`.
+9. **Mobile and keyboard.** Load `/playground` at 390px wide: the table scrolls horizontally inside its
    own container and the page body does not. Tab to a destructive tool, activate it with the keyboard,
    and confirm the consent dialog takes focus and that **Escape** denies it.
 
@@ -92,5 +101,7 @@ they are listed so the cause is obvious if you fork it and reintroduce one.
 | `next build` prints `✓ Compiled successfully`, then exits 1 at "Linting and checking validity of types" with no error | Vercel installs only `apps/web`'s dependencies, so a `typescript` declared solely at the workspace root is missing | Already fixed: `typescript` and `@types/node` are declared in `apps/web/package.json` |
 | `Module not found: @toolfence/core` | Root Directory set to the repo root, or files outside the root excluded | Set Root Directory to `apps/web` and enable including files outside it |
 | Build fails resolving `./scanner` | An install that skipped workspaces | Delete the Vercel build cache and redeploy |
+| `/foreign` injects but no panel appears | `public/toolfence.js` is stale or missing from the deploy | Run `npm run build:inject` and commit the result; the file is served from `apps/web/public` |
+| The bookmarklet does nothing on someone else's site | That site sends a strict `script-src` CSP | Expected, and documented. The browser is refusing an injected script — import `packages/core` into that app instead |
 | Tool count is 0 on the deployed site | The app root selector did not match | Confirm `InvoiceApp` still renders `id="invoice-app"`; `useToolFence("#invoice-app")` scans that subtree |
 | Banner never turns green | The browser has no WebMCP | Expected. Enable `chrome://flags/#enable-webmcp-testing`, or use **Run agent script** — same firewall path |

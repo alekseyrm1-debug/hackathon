@@ -73,7 +73,10 @@ function rawName(candidate: Candidate, capability: Capability): string {
     case "form":
       return VERB_PREFIX.test(`${label}_`) ? label : `submit_${label}`;
     case "row-action": {
-      const target = singular(toSnakeCase(collectionSubjectOf(candidate))) || subject;
+      // The row's identifier column says what a row *is* ("Ticket", "Invoice"),
+      // which names the tool better than the surrounding heading does. The
+      // section is the fallback for tables with no th[scope=row].
+      const target = subject || singular(toSnakeCase(collectionSubjectOf(candidate)));
       if (!target || label.includes(target)) return label;
       return `${label}_${target}`;
     }

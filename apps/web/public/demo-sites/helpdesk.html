@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northwind Support Desk</title>
+<!--
+  A third-party page. It is not part of ToolFence and contains no reference to
+  it: no script tag, no data attribute, no hook. Different framework (none),
+  different CSS (hand-written, light), different naming conventions, written to
+  look like software somebody else shipped.
+
+  What it does share with any decent web app is accessible markup: labelled
+  controls, a table with <th scope="row">, aria-labels on the row buttons. That
+  is the whole contract ToolFence asks for.
+-->
+<style>
+  :root {
+    --ink: #1d2430; --muted: #5f6b7f; --line: #dfe4ec; --bg: #f4f6fa;
+    --accent: #1f5fa8; --danger: #a8331f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 Georgia, "Iowan Old Style", "Times New Roman", serif;
+  }
+  .masthead { background: #16233a; color: #fff; padding: 14px 24px; }
+  .masthead h1 { margin: 0; font-size: 19px; letter-spacing: .01em; }
+  .masthead p { margin: 2px 0 0; font-size: 13px; color: #9fb0cc; }
+  main { max-width: 980px; margin: 0 auto; padding: 22px 24px 60px; }
+  section { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 18px 20px; margin-bottom: 18px; }
+  section > h2 { margin: 0 0 14px; font-size: 16px; border-bottom: 2px solid var(--line); padding-bottom: 6px; }
+  .figures { display: flex; gap: 32px; margin: 0; }
+  .figures div { flex: 1; }
+  .figures dt { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .figures dd { margin: 3px 0 0; font-size: 26px; font-family: system-ui, sans-serif; }
+  .toolbar { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  input, select, textarea {
+    font: inherit; padding: 6px 9px; border: 1px solid #c3ccda; border-radius: 3px; background: #fff; min-width: 190px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  caption { text-align: left; font-size: 13px; color: var(--muted); padding-bottom: 8px; }
+  th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  tbody th { font-family: ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .tag { font: 600 11px/1 system-ui, sans-serif; text-transform: uppercase; letter-spacing: .05em; padding: 4px 7px; border-radius: 3px; }
+  .tag.urgent { background: #fbe4e0; color: var(--danger); }
+  .tag.normal { background: #e6edf7; color: var(--accent); }
+  .tag.low    { background: #eceff4; color: var(--muted); }
+  .tag.resolved { background: #e3f2e7; color: #226b39; }
+  .tag.refunded { background: #f3e9d2; color: #7a5a12; }
+  .row-actions { display: flex; gap: 5px; }
+  button {
+    font: 500 13px/1 system-ui, sans-serif; padding: 6px 10px; border-radius: 3px;
+    border: 1px solid #c3ccda; background: #f7f9fc; color: var(--ink); cursor: pointer;
+  }
+  button:hover { background: #eef2f8; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.warn { border-color: #e0b6ae; color: var(--danger); }
+  .newticket { display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: end; }
+  .newticket .wide { grid-column: span 2; }
+  .notice { margin: 0 0 14px; padding: 9px 12px; background: #eef4fb; border-left: 3px solid var(--accent); font-size: 13px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <h1>Northwind Support Desk</h1>
+  <p>Tickets · Refunds · Escalations</p>
+</div>
+
+<main>
+  <p class="notice" id="notice" role="status">Ready.</p>
+
+  <section aria-labelledby="queue-heading">
+    <h2 id="queue-heading">Ticket queue</h2>
+
+    <div class="toolbar">
+      <div class="field">
+        <label for="q">Search tickets</label>
+        <input type="search" id="q" placeholder="customer or subject">
+      </div>
+      <div class="field">
+        <label for="priority">Filter by priority</label>
+        <select id="priority">
+          <option value="all">All priorities</option>
+          <option value="urgent">Urgent</option>
+          <option value="normal">Normal</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <button type="button" id="purge" class="warn" aria-label="Delete all resolved tickets">
+        Delete all resolved tickets
+      </button>
+    </div>
+
+    <table aria-label="Support tickets">
+      <caption>Open and recently closed tickets, newest first.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Ticket</th>
+          <th scope="col">Customer</th>
+          <th scope="col">Subject</th>
+          <th scope="col">Priority</th>
+          <th scope="col">Status</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </section>
+
+  <section aria-labelledby="new-heading">
+    <h2 id="new-heading">Open a new ticket</h2>
+    <form class="newticket" id="new-ticket" method="post">
+      <div class="field">
+        <label for="customer">Customer</label>
+        <input id="customer" name="customer" required>
+      </div>
+      <div class="field">
+        <label for="subject">Subject</label>
+        <input id="subject" name="subject" required>
+      </div>
+      <div class="field">
+        <label for="new-priority">Priority</label>
+        <select id="new-priority" name="priority">
+          <option value="low">Low</option>
+          <option value="normal" selected>Normal</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+      <button type="submit" class="primary">Create ticket</button>
+    </form>
+  </section>
+
+  <section aria-labelledby="figures-heading">
+    <h2 id="figures-heading">Desk summary</h2>
+    <dl class="figures" aria-label="Desk summary">
+      <div><dt>Open tickets</dt><dd id="fig-open">0</dd></div>
+      <div><dt>Urgent</dt><dd id="fig-urgent">0</dd></div>
+      <div><dt>Refunds issued</dt><dd id="fig-refunds">0</dd></div>
+    </dl>
+  </section>
+
+  <footer>Northwind Trading Co. · internal tool · not a real company</footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var seq = 2048;
+  var tickets = [
+    { id: "NW-2041", customer: "Aster Labs",      subject: "Order arrived damaged",     priority: "urgent", status: "open" },
+    { id: "NW-2039", customer: "Peak Outfitters", subject: "Wrong size shipped",        priority: "normal", status: "open" },
+    { id: "NW-2036", customer: "Halden GmbH",     subject: "Invoice mismatch",          priority: "normal", status: "open" },
+    { id: "NW-2031", customer: "Rivet & Co",      subject: "Delivery window too late",  priority: "low",    status: "resolved" },
+    { id: "NW-2028", customer: "Corvus Studio",   subject: "Double charged in March",   priority: "urgent", status: "open" },
+    { id: "NW-2019", customer: "Marlow Foods",    subject: "Requesting bulk quote",     priority: "low",    status: "resolved" }
+  ];
+  var refunds = 0;
+
+  var rows = document.getElementById("rows");
+  var notice = document.getElementById("notice");
+  var search = document.getElementById("q");
+  var priority = document.getElementById("priority");
+
+  function say(text) { notice.textContent = text; }
+
+  function visible() {
+    var term = search.value.trim().toLowerCase();
+    var level = priority.value;
+    return tickets.filter(function (t) {
+      if (level !== "all" && t.priority !== level) return false;
+      if (!term) return true;
+      return (t.customer + " " + t.subject).toLowerCase().indexOf(term) !== -1;
+    });
+  }
+
+  function cell(text) {
+    var td = document.createElement("td");
+    td.textContent = text;
+    return td;
+  }
+
+  function tagCell(text, cls) {
+    var td = document.createElement("td");
+    var span = document.createElement("span");
+    span.className = "tag " + cls;
+    span.textContent = text;
+    td.appendChild(span);
+    return td;
+  }
+
+  function action(label, text, cls, handler) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.setAttribute("aria-label", label);
+    button.textContent = text;
+    if (cls) button.className = cls;
+    button.addEventListener("click", handler);
+    return button;
+  }
+
+  function render() {
+    rows.textContent = "";
+    var list = visible();
+
+    if (list.length === 0) {
+      var blank = document.createElement("tr");
+      var td = document.createElement("td");
+      td.colSpan = 6;
+      td.textContent = "No tickets match the current filter.";
+      blank.appendChild(td);
+      rows.appendChild(blank);
+    }
+
+    list.forEach(function (ticket) {
+      var tr = document.createElement("tr");
+
+      var th = document.createElement("th");
+      th.scope = "row";
+      th.textContent = ticket.id;
+      tr.appendChild(th);
+
+      tr.appendChild(cell(ticket.customer));
+      tr.appendChild(cell(ticket.subject));
+      tr.appendChild(tagCell(ticket.priority, ticket.priority));
+      tr.appendChild(tagCell(ticket.status, ticket.status === "open" ? "normal" : ticket.status));
+
+      var actions = document.createElement("td");
+      var group = document.createElement("div");
+      group.className = "row-actions";
+
+      group.appendChild(action("View ticket " + ticket.id, "View", "", function () {
+        say("Ticket " + ticket.id + " — " + ticket.customer + ": " + ticket.subject);
+      }));
+
+      group.appendChild(action("Escalate ticket " + ticket.id, "Escalate", "", function () {
+        ticket.priority = "urgent";
+        say("Ticket " + ticket.id + " escalated to urgent.");
+        render();
+      }));
+
+      group.appendChild(action("Refund order for ticket " + ticket.id, "Refund", "warn", function () {
+        ticket.status = "refunded";
+        refunds += 1;
+        say("Refund issued for ticket " + ticket.id + ".");
+        render();
+      }));
+
+      actions.appendChild(group);
+      tr.appendChild(actions);
+      rows.appendChild(tr);
+    });
+
+    document.getElementById("fig-open").textContent = tickets.filter(function (t) {
+      return t.status === "open";
+    }).length;
+    document.getElementById("fig-urgent").textContent = tickets.filter(function (t) {
+      return t.priority === "urgent" && t.status === "open";
+    }).length;
+    document.getElementById("fig-refunds").textContent = refunds;
+  }
+
+  search.addEventListener("input", render);
+  priority.addEventListener("change", render);
+
+  document.getElementById("purge").addEventListener("click", function () {
+    var before = tickets.length;
+    tickets = tickets.filter(function (t) { return t.status !== "resolved"; });
+    say("Deleted " + (before - tickets.length) + " resolved ticket(s).");
+    render();
+  });
+
+  document.getElementById("new-ticket").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    seq += 1;
+    tickets.unshift({
+      id: "NW-" + seq,
+      customer: form.customer.value || "Unnamed",
+      subject: form.subject.value || "(no subject)",
+      priority: form.priority.value,
+      status: "open"
+    });
+    form.reset();
+    say("Created ticket NW-" + seq + ".");
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

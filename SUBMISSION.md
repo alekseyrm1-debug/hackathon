@@ -2,7 +2,7 @@
 
 **Tagline:** Turn any web app into WebMCP tools — and never let a dangerous tool run without the user's consent.
 
-**Live demo:** https://toolfence-omega.vercel.app/playground · **Repository:** https://github.com/alekseyrm1-debug/hackathon · **Licence:** MIT
+**Live demo:** https://toolfence-omega.vercel.app/playground · **On a page we didn't write:** https://toolfence-omega.vercel.app/foreign · **Repository:** https://github.com/alekseyrm1-debug/hackathon · **Licence:** MIT
 
 ---
 
@@ -112,6 +112,28 @@ throws or unmounts is treated as a denial, and a `Firewall` built without a prom
 rather than allowing it. Grouping is what keeps the tool list sane: buttons repeated across table rows
 collapse into one parameterised tool (`delete_invoice(invoice)`) rather than one tool per row, with the
 identifier column discovered from `<th scope="row">`.
+
+## The demo that is not ours
+
+A generator demonstrated only on its author's own app proves the author can write markup the generator
+likes. So the submission includes a second page ToolFence has no relationship with:
+`apps/web/public/demo-sites/helpdesk.html`, a Northwind Support Desk written as static HTML with
+hand-written CSS, no framework, a domain nothing in the risk lexicon was tuned for, and no reference to
+ToolFence anywhere in the file. At `/foreign` it is served in a frame with an **Inject ToolFence**
+button that appends `toolfence.js` to that document at runtime — the same thing the bookmarklet on that
+page does on a site neither we nor you have seen.
+
+Nine tools come out of it. `list_support_tickets` and `read_desk_summary` read; `search_tickets`,
+`filter_by_priority` and `view_ticket` change only what is displayed; `escalate_ticket` and
+`create_ticket` write; `refund_order_for_ticket` and `delete_all_resolved_tickets` are destructive and
+stop at the dialog. Six tickets sit in that table and there is still exactly one refund tool, taking the
+ticket id as a parameter discovered from `<th scope="row">`. The injectable build is 48 kB with no
+dependencies, and it mounts its panel in a shadow root — which also means `scan()`, which does not cross
+shadow boundaries, cannot see ToolFence's own buttons and turn them into tools.
+
+`packages/core/test/foreign-page.test.ts` runs that same entry point against that same file in jsdom
+and asserts the nine tools, the capability of each, and that a denied refund leaves the page unchanged.
+The claim is in CI, not only in a screenshot.
 
 Two properties are deliberate and worth stating. First, the optional AI naming pass can rewrite tool
 names and descriptions but **cannot** touch a capability, a classification or an execution plan — those

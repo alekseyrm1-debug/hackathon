@@ -1,11 +1,11 @@
-# Demo video script — 3 minutes, second by second
+# Demo video script — 3 minutes 20, second by second
 
 **Format:** screen recording with voice-over. 1600×1000 browser window, no webcam.
 **Rule for the first 15 seconds:** the product is already running and moving before you say a word.
 
 **Before you hit record**
 
-- Two tabs open: `/playground` and nothing else. Close the console, hide bookmarks.
+- Two tabs open: `/playground` and `/foreign`, in that order. Close the console, hide bookmarks.
 - The firewall panel is scrolled into view in the right column.
 - The audit log is empty. Filters are cleared. All 7 invoices are visible.
 - Rehearse once. The 40-second consent beat is the whole submission — do not rush it.
@@ -104,7 +104,21 @@ Then change the `write` policy dropdown to **ask the user**, and tick **Strict m
 
 ---
 
-## 2:45 – 3:00 · Close
+## 2:45 – 3:05 · The page we didn't write
+
+**On screen:** Open `/foreign` in the second tab. Scroll the frame briefly so the support desk reads as
+a different product. Press **Inject ToolFence**. Wait for the panel. Open `refund_order_for_ticket`,
+pick `NW-2041`, press **Call tool**, let the dialog appear, and click **Deny**.
+
+**Say:**
+> "One more thing, because a demo on your own app proves nothing. This is a static HTML support desk —
+> no React, no Tailwind, no mention of ToolFence in its source. I'm injecting the script the way a
+> bookmarklet would. Nine tools, from markup written for humans. And the refund — a word nothing here
+> was tuned for — still stops."
+
+---
+
+## 3:05 – 3:20 · Close
 
 **On screen:** Scroll up so the whole playground is visible — dashboard, tools, audit log. Hold still.
 
@@ -128,6 +142,7 @@ Then change the `write` policy dropdown to **ask the user**, and tick **Strict m
 | Consent | Tool name · arguments JSON · "what will change" · "why it needs approval" · three buttons |
 | Denial | Row still present, `denied by user` in the audit log |
 | Audit | An expanded log row showing recorded arguments; policy dropdowns and strict mode |
+| Third-party page | The helpdesk before injection, the panel after it, and the refund stopping at consent |
 
 ## Recording notes
 

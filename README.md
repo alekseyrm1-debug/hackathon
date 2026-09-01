@@ -6,8 +6,9 @@ ToolFence reads a page's accessibility tree, generates working WebMCP tools at r
 generated tool behind a capability firewall that classifies it as `read`, `write` or `destructive` and
 stops the destructive ones at a consent dialog.
 
-**[Live demo →](https://toolfence-omega.vercel.app/playground)** · no API key, no sign-in,
-works in an ordinary browser.
+**[Live demo →](https://toolfence-omega.vercel.app/playground)** ·
+**[On a page we didn't write →](https://toolfence-omega.vercel.app/foreign)** · no API key, no
+sign-in, works in an ordinary browser.
 
 ![The playground: an ordinary invoices dashboard on the left, the tools ToolFence generated from it on the right](docs/screenshots/02-playground.png)
 
@@ -89,6 +90,46 @@ the row identifier as a parameter. The identifier column is discovered from `<th
 
 ---
 
+## On a page we didn't write
+
+A demo that only works on its author's own app proves very little, so ToolFence ships with a second
+demo it has no relationship with. `apps/web/public/demo-sites/helpdesk.html` is a **Northwind Support
+Desk**: static HTML, no React, no Tailwind, hand-written CSS, a different domain, and — grep it — no
+mention of ToolFence anywhere in the file.
+
+**[Open `/foreign`](https://toolfence-omega.vercel.app/foreign)**, press **Inject ToolFence**, and a
+`<script>` is appended to that document at runtime, exactly the way the bookmarklet on the same page
+does it on a site neither of us has seen. Nine tools appear, generated from markup written for humans:
+
+| Tool | Capability | Why |
+|---|---|---|
+| `list_support_tickets`, `read_desk_summary` | `read` | Return information |
+| `search_tickets`, `filter_by_priority`, `view_ticket` | `read` | Change what is displayed, not what is stored |
+| `escalate_ticket`, `create_ticket` | `write` | Change state, recoverably |
+| `refund_order_for_ticket` | `destructive` | Moves money |
+| `delete_all_resolved_tickets` | `destructive` | Irreversible |
+
+Six tickets are in that table and there is still exactly one `refund_order_for_ticket`, taking the
+ticket id as a parameter. Nothing in the risk lexicon was tuned for support tickets or refunds; the two
+tools that can cost the user something are the two that stop at the consent dialog.
+
+![ToolFence injected into a third-party support desk: the panel, and the consent dialog stopping a refund](docs/screenshots/05-foreign-site.png)
+
+`packages/core/test/foreign-page.test.ts` runs the same injectable entry point against that exact file
+in jsdom, so the claim on this page is checked by CI rather than by a screenshot.
+
+### Take it to a site of your own
+
+`/foreign` carries a bookmarklet — drag it to the bookmarks bar, open any accessible dashboard, click
+it. It loads `toolfence.js` (48 kB, no dependencies, built by `npm run build:inject`), which mounts the
+panel in a shadow root so the host page's CSS and ToolFence's cannot reach each other. The shadow root
+is also why the panel's own buttons never become tools: `scan()` does not cross that boundary.
+
+Sites that send a strict `script-src` Content-Security-Policy will refuse the injection. That is the
+browser doing its job — for those, ToolFence belongs in the page, as `packages/core` on an import.
+
+---
+
 ## Run it locally
 
 ```bash
@@ -96,10 +137,11 @@ git clone https://github.com/alekseyrm1-debug/hackathon.git toolfence
 cd toolfence
 npm install
 
-npm run dev          # http://localhost:3000  → open /playground
-npm test             # 42 Vitest tests against a jsdom page
+npm run dev          # http://localhost:3000  → /playground, and /foreign
+npm test             # 46 Vitest tests against a jsdom page
 npm run typecheck    # tsc --noEmit for both packages
-npm run build        # production build
+npm run build:inject # bundles the injectable public/toolfence.js
+npm run build        # production build (runs build:inject first)
 ```
 
 No API key is needed for anything above. The optional AI naming pass is the only feature that wants
@@ -142,6 +184,9 @@ one, and the app is fully functional without it.
 | `register.ts` | The **only** file that touches `navigator.modelContext`. A spec change should not reach any other file. |
 | `enrich.ts` | Optional AI naming pass. Can rewrite names and prose only — capability, classification and execution plan are copied from the heuristic tool. |
 | `index.ts` | Public exports plus `runPipeline()`, which runs scan → generate → bind → register in one call. |
+| `overlay.ts` | The panel and consent dialog for pages that are not ours: plain DOM in a shadow root, no framework. |
+| `standalone.ts` | `start()` — the pipeline plus a `MutationObserver`, for injection into an arbitrary document. |
+| `browser-entry.ts` | Bundle entry. Exposes `window.ToolFence` and starts on load; built to `apps/web/public/toolfence.js`. |
 
 ### `apps/web` — Next.js 15 App Router, Tailwind v4
 
@@ -149,6 +194,8 @@ one, and the app is fully functional without it.
 |---|---|
 | `app/page.tsx` | Landing page: the claim, the problem, the pipeline, how to try it. |
 | `app/playground/page.tsx` | The demo: dashboard + inspector side by side, plus the scripted agent run. |
+| `app/foreign/page.tsx` | The third-party proof: the helpdesk in a frame, an Inject button, and the bookmarklet. |
+| `public/demo-sites/helpdesk.html` | A page ToolFence has no relationship with. Static, framework-free, zero ToolFence references. |
 | `app/api/enrich/route.ts` | AI mode. Returns **501** when `OPENAI_API_KEY` is unset, so the client falls back cleanly. |
 | `components/InvoiceApp.tsx` | The demo product. Plain React. Contains no ToolFence code of any kind. |
 | `components/useToolFence.ts` | The React binding: one firewall per page, `MutationObserver`-driven rescans, consent prompt wiring. |
@@ -189,7 +236,11 @@ confident about — the fail-safe setting for pages the heuristics do not unders
 - **Consent is per tool, not per argument.** "Allow for this session" grants the whole tool. There is no
   "allow deleting drafts but not paid invoices" — argument-level policy is designed for in the types but
   not implemented.
-- **Same-document only.** The scanner does not cross iframe or shadow-root boundaries.
+- **Same-document only.** The scanner does not cross iframe or shadow-root boundaries. (Injecting
+  *into* a frame works — that is what `/foreign` does — but one injection scans one document.)
+- **Injection is blocked by a strict CSP.** The bookmarklet appends a `<script>`, so a site sending a
+  restrictive `script-src` will refuse it, silently, from the browser's side. Nothing can be done about
+  that from a bookmarklet: on such a site ToolFence has to be imported into the page instead.
 - **The WebMCP surface is a moving target.** `register.ts` supports both `registerTool` and
   `provideContext` and degrades to a working in-page simulator when neither exists, but it is written
   against a draft API and may need one file's worth of edits when the spec settles.

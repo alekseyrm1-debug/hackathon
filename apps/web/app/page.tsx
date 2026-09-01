@@ -60,9 +60,14 @@ export default function LandingPage() {
             </span>
             ToolFence
           </span>
-          <Link href="/playground" className={softKey("primary", "sm")}>
-            Open the playground
-          </Link>
+          <span className="flex items-center gap-2">
+            <Link href="/foreign" className={softKey("ghost", "sm")}>
+              On someone else&rsquo;s site
+            </Link>
+            <Link href="/playground" className={softKey("primary", "sm")}>
+              Open the playground
+            </Link>
+          </span>
         </div>
       </header>
 
@@ -84,9 +89,12 @@ export default function LandingPage() {
             <Link href="/playground" className={softKey("primary", "lg")}>
               Try the live demo
             </Link>
+            <Link href="/foreign" className={softKey("secondary", "lg")}>
+              Watch it work on a page we didn&rsquo;t write
+            </Link>
             <a
               href="https://github.com/alekseyrm1-debug/hackathon"
-              className={softKey("secondary", "lg")}
+              className={softKey("ghost", "lg")}
             >
               Read the source
             </a>
