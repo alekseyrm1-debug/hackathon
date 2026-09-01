@@ -57,3 +57,10 @@ body {
     animation: none;
   }
 }
+
+/* A single, very soft brand glow behind the top of a page, so the neutral
+   canvas has depth without introducing a second colour. */
+.tf-canvas {
+  background-image: radial-gradient(48rem 22rem at 50% -7rem, rgba(67, 56, 202, 0.09), transparent 70%);
+  background-repeat: no-repeat;
+}

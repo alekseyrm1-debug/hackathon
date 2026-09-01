@@ -150,7 +150,7 @@ export function InvoiceApp() {
         </p>
       </header>
 
-      <dl aria-label="Account summary" className="grid gap-3 sm:grid-cols-3">
+      <dl aria-label="Account summary" className="grid grid-cols-3 gap-2.5 sm:gap-3">
         <SummaryCard term="Outstanding" value={money.format(totals.outstanding)} />
         <SummaryCard term="Overdue" value={money.format(totals.overdue)} tone="destructive" />
         <SummaryCard term="Paid this quarter" value={money.format(totals.paid)} tone="read" />
@@ -158,7 +158,7 @@ export function InvoiceApp() {
 
       <section
         aria-label="Invoices"
-        className="rounded-xl bg-[color:var(--color-surface)] ring-1 ring-[color:var(--color-hairline)]"
+        className="rounded-xl bg-[color:var(--color-surface)] shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-[color:var(--color-hairline)]"
       >
         <form
           role="search"
@@ -223,12 +223,12 @@ export function InvoiceApp() {
                   key={invoice.id}
                   className="border-t border-[color:var(--color-hairline)] align-middle"
                 >
-                  <th scope="row" className="px-4 py-2.5 text-left font-mono text-xs font-medium">
+                  <th scope="row" className="whitespace-nowrap px-4 py-2.5 text-left font-mono text-xs font-medium">
                     {invoice.id}
                   </th>
                   <td className="px-4 py-2.5">{invoice.client}</td>
-                  <td className="px-4 py-2.5 tabular-nums">{money.format(invoice.amount)}</td>
-                  <td className="px-4 py-2.5 tabular-nums text-[color:var(--color-ink-muted)]">
+                  <td className="whitespace-nowrap px-4 py-2.5 tabular-nums">{money.format(invoice.amount)}</td>
+                  <td className="whitespace-nowrap px-4 py-2.5 tabular-nums text-[color:var(--color-ink-muted)]">
                     {invoice.due}
                   </td>
                   <td className="px-4 py-2.5">
@@ -281,7 +281,7 @@ export function InvoiceApp() {
       {selectedInvoice ? (
         <section
           aria-label="Invoice details"
-          className="tf-rise rounded-xl bg-[color:var(--color-surface)] p-4 ring-1 ring-[color:var(--color-hairline)]"
+          className="tf-rise rounded-xl bg-[color:var(--color-surface)] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-[color:var(--color-hairline)]"
         >
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">Invoice {selectedInvoice.id}</h2>
@@ -306,7 +306,7 @@ export function InvoiceApp() {
         aria-label="Create invoice"
         method="post"
         onSubmit={handleCreate}
-        className="rounded-xl bg-[color:var(--color-surface)] p-4 ring-1 ring-[color:var(--color-hairline)]"
+        className="rounded-xl bg-[color:var(--color-surface)] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-[color:var(--color-hairline)]"
       >
         <h2 className="text-sm font-semibold">Create invoice</h2>
         <div className="mt-3 flex flex-wrap items-end gap-3">
@@ -387,11 +387,15 @@ function SummaryCard({
       className={
         compact
           ? "rounded-lg bg-slate-50 px-3 py-2"
-          : "rounded-xl bg-[color:var(--color-surface)] px-4 py-3 ring-1 ring-[color:var(--color-hairline)]"
+          : "rounded-xl bg-[color:var(--color-surface)] px-3 py-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-[color:var(--color-hairline)] sm:px-4 sm:py-3"
       }
     >
       <dt className="text-xs font-medium text-[color:var(--color-ink-muted)]">{term}</dt>
-      <dd className={`mt-1 text-lg font-semibold tabular-nums ${compact ? "text-sm" : ""} ${valueColor}`}>
+      <dd
+        className={`mt-1 font-semibold tabular-nums ${
+          compact ? "text-sm" : "text-[15px] sm:text-lg"
+        } ${valueColor}`}
+      >
         {value}
       </dd>
     </div>

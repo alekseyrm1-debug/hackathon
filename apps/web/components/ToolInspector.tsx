@@ -143,7 +143,11 @@ function ToolCard({ tool }: { tool: BoundTool }) {
               </span>
             ) : null}
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-[color:var(--color-ink-muted)]">
+          <p
+            className={`mt-1 text-xs leading-relaxed text-[color:var(--color-ink-muted)] ${
+              open ? "" : "line-clamp-2"
+            }`}
+          >
             {schema.description}
           </p>
         </div>

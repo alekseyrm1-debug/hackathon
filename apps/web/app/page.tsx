@@ -50,7 +50,7 @@ const CAPABILITIES = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
+    <div className="tf-canvas min-h-screen">
       <header className="border-b border-[color:var(--color-hairline)] bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3">
           <span className="flex items-center gap-2 text-sm font-semibold">

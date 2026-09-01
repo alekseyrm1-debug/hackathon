@@ -70,7 +70,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-xl bg-[color:var(--color-surface)] ring-1 ring-[color:var(--color-hairline)] ${className}`}
+      className={`rounded-xl bg-[color:var(--color-surface)] shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-[color:var(--color-hairline)] ${className}`}
     >
       {children}
     </div>
