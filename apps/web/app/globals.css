@@ -1,0 +1,59 @@
+/* One palette for the whole product: slate for surfaces, indigo for the brand,
+   and exactly three capability colours (emerald / amber / rose). Nothing else. */
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-hairline: #e4e7ec;
+  --color-ink: #101828;
+  --color-ink-muted: #667085;
+  --color-brand: #4338ca;
+  --color-brand-soft: #eef2ff;
+  --color-read: #047857;
+  --color-read-soft: #ecfdf5;
+  --color-write: #b45309;
+  --color-write-soft: #fffbeb;
+  --color-destructive: #be123c;
+  --color-destructive-soft: #fff1f2;
+
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A single focus treatment everywhere, so keyboard use never looks broken. */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@keyframes toolfence-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tf-rise {
+  animation: toolfence-rise 160ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-rise {
+    animation: none;
+  }
+}
