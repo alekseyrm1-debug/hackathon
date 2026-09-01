@@ -1,8 +1,9 @@
 // The "does this only work on your own demo?" page.
 //
-// `/playground` is our app. This page is somebody else's: a hand-written,
-// framework-free support desk served as a static file, with no script tag, no
-// data attribute and no reference to ToolFence anywhere in it. Pressing Inject
+// `/playground` is our app. The two pages below are somebody else's: static
+// files with no script tag, no data attribute and no reference to ToolFence
+// anywhere in them — one a hand-written support desk built from a real table,
+// one a dispatch board with no table element at all. Pressing Inject
 // appends `/toolfence.js` to that document at runtime — exactly what the
 // bookmarklet does on a page we have never seen — and the panel that appears is
 // generated entirely from the markup already there.
@@ -12,19 +13,67 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button, softKey } from "../../components/ui";
 
-const FOREIGN_PAGE = "/demo-sites/helpdesk.html";
+interface ForeignPage {
+  readonly id: string;
+  readonly path: string;
+  readonly title: string;
+  readonly blurb: string;
+  readonly source: string;
+  readonly heading: string;
+  readonly footnote: string;
+  readonly tools: readonly { name: string; capability: string; note: string }[];
+}
 
-const EXPECTED = [
-  { name: "list_support_tickets", capability: "read", note: "Reads the table back as structured rows." },
-  { name: "search_tickets", capability: "read", note: "Drives the search box." },
-  { name: "filter_by_priority", capability: "read", note: "Drives the priority select." },
-  { name: "read_desk_summary", capability: "read", note: "Reads the summary figures." },
-  { name: "view_ticket", capability: "read", note: "One tool, ticket id as a parameter." },
-  { name: "escalate_ticket", capability: "write", note: "Changes state, but recoverable." },
-  { name: "create_ticket", capability: "write", note: "Fills and submits the new-ticket form." },
-  { name: "refund_order_for_ticket", capability: "destructive", note: "Moves money — stops at consent." },
-  { name: "delete_all_resolved_tickets", capability: "destructive", note: "Irreversible — stops at consent." },
+const PAGES: readonly ForeignPage[] = [
+  {
+    id: "helpdesk",
+    path: "/demo-sites/helpdesk.html",
+    title: "Northwind Support Desk",
+    blurb:
+      "Static HTML, hand-written serif CSS, no framework. A real table with th scope=row and real buttons — but a domain (tickets, refunds, escalations) nothing here was tuned for.",
+    source: "helpdesk.html",
+    heading: "Nine tools, from markup written for humans",
+    footnote:
+      "Six tickets are in that table, and there is still exactly one refund_order_for_ticket: the ticket id is a parameter, discovered from th scope=row.",
+    tools: [
+      { name: "list_support_tickets", capability: "read", note: "Reads the table back as structured rows." },
+      { name: "search_tickets", capability: "read", note: "Drives the search box." },
+      { name: "filter_by_priority", capability: "read", note: "Drives the priority select." },
+      { name: "read_desk_summary", capability: "read", note: "Reads the summary figures." },
+      { name: "view_ticket", capability: "read", note: "One tool, ticket id as a parameter." },
+      { name: "escalate_ticket", capability: "write", note: "Changes state, but recoverable." },
+      { name: "create_ticket", capability: "write", note: "Fills and submits the new-ticket form." },
+      { name: "refund_order_for_ticket", capability: "destructive", note: "Moves money — stops at consent." },
+      { name: "delete_all_resolved_tickets", capability: "destructive", note: "Irreversible — stops at consent." },
+    ],
+  },
+  {
+    id: "dispatch",
+    path: "/demo-sites/dispatch.html",
+    title: "Halden Freight — Dispatch Board",
+    blurb:
+      "The harder one. There is no table element in this page at all — the board is an ARIA grid of divs — and no button in its rows: the actions are anchors with role=button. Different domain again: freight.",
+    source: "dispatch.html",
+    heading: "Ten tools, and not a table tag in sight",
+    footnote:
+      "Six loads × four actions is 24 controls on the page. They collapse to four tools, each taking the load id — read from role=rowheader, because there is no th to read.",
+    tools: [
+      { name: "list_active_loads", capability: "read", note: "Reads a div grid back as structured rows." },
+      { name: "search_loads", capability: "read", note: "Drives the search box." },
+      { name: "filter_by_lane", capability: "read", note: "Drives the lane select." },
+      { name: "read_shift_totals", capability: "read", note: "Reads the shift figures." },
+      { name: "track_load", capability: "write", note: "Only reports status — classified up, not down." },
+      { name: "hold_load", capability: "write", note: "Changes state, but recoverable." },
+      { name: "transfer_load_to_another_carrier", capability: "destructive", note: "Transfers ownership — stops." },
+      { name: "pay_carrier_for_load", capability: "destructive", note: "Moves money — stops at consent." },
+      { name: "submit_book_load", capability: "destructive", note: "Books a load: commits an order — stops." },
+      { name: "cancel_all_delayed_shipments", capability: "destructive", note: "Irreversible — stops at consent." },
+    ],
+  },
 ];
+
+const SOURCE_BASE =
+  "https://github.com/alekseyrm1-debug/hackathon/blob/HEAD/apps/web/public/demo-sites/";
 
 const CHIP: Record<string, string> = {
   read: "bg-[color:var(--color-read-soft)] text-[color:var(--color-read)] ring-emerald-200",
@@ -37,6 +86,7 @@ export default function ForeignPage() {
   const bookmarklet = useRef<HTMLAnchorElement>(null);
   const [injected, setInjected] = useState(false);
   const [origin, setOrigin] = useState("");
+  const [page, setPage] = useState<ForeignPage>(PAGES[0]);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -61,7 +111,14 @@ export default function ForeignPage() {
 
   function reset() {
     setInjected(false);
-    if (frame.current) frame.current.src = FOREIGN_PAGE;
+    if (frame.current) frame.current.src = page.path;
+  }
+
+  function show(next: ForeignPage) {
+    if (next.id === page.id) return;
+    setPage(next);
+    setInjected(false);
+    if (frame.current) frame.current.src = next.path;
   }
 
   return (
@@ -85,15 +142,39 @@ export default function ForeignPage() {
           Somebody else&apos;s page
         </p>
         <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight">
-          The same pipeline, on a page that was not built for it.
+          The same pipeline, on pages that were not built for it.
         </h1>
         <p className="mt-3 max-w-3xl text-[color:var(--color-ink-muted)]">
-          Below is <code className="rounded bg-black/5 px-1 py-0.5 text-xs">demo-sites/helpdesk.html</code> — a
-          static support desk with no React, no Tailwind, and no mention of ToolFence in its source. View it and
-          check. Press <strong>Inject ToolFence</strong> and a script is appended to that document at runtime,
-          the way a bookmarklet would. Everything the panel then shows was derived from the markup that was
-          already on the page.
+          Two static files, neither of which mentions ToolFence anywhere in its source — grep them, and
+          <code className="mx-1 rounded bg-black/5 px-1 py-0.5 text-xs">no-references.test.ts</code> greps them
+          again on every CI run. Press <strong>Inject ToolFence</strong> and a script is appended to that
+          document at runtime, the way a bookmarklet would. Everything the panel then shows was derived from
+          the markup that was already there.
         </p>
+
+        <div className="mt-5 flex flex-wrap gap-2.5">
+          {PAGES.map((entry) => {
+            const active = entry.id === page.id;
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => show(entry)}
+                aria-pressed={active}
+                className={`max-w-sm rounded-xl border px-3.5 py-2.5 text-left transition ${
+                  active
+                    ? "border-[color:var(--color-brand)] bg-white shadow-sm"
+                    : "border-[color:var(--color-hairline)] bg-white/60 hover:bg-white"
+                }`}
+              >
+                <span className="block text-sm font-semibold">{entry.title}</span>
+                <span className="mt-0.5 block text-[11px] leading-snug text-[color:var(--color-ink-muted)]">
+                  {entry.blurb}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-2.5">
           <Button variant="primary" onClick={inject} disabled={injected}>
@@ -102,12 +183,12 @@ export default function ForeignPage() {
           <Button variant="secondary" onClick={reset}>
             Reload clean
           </Button>
-          <a className={softKey("ghost", "md")} href={FOREIGN_PAGE} target="_blank" rel="noreferrer">
+          <a className={softKey("ghost", "md")} href={page.path} target="_blank" rel="noreferrer">
             Open the page on its own ↗
           </a>
           <a
             className={softKey("ghost", "md")}
-            href="https://github.com/alekseyrm1-debug/hackathon/blob/HEAD/apps/web/public/demo-sites/helpdesk.html"
+            href={`${SOURCE_BASE}${page.source}`}
             target="_blank"
             rel="noreferrer"
           >
@@ -125,26 +206,26 @@ export default function ForeignPage() {
               </span>
               <span className="truncate rounded bg-white px-2 py-0.5 font-mono text-[11px] text-[color:var(--color-ink-muted)] ring-1 ring-inset ring-black/10">
                 {origin}
-                {FOREIGN_PAGE}
+                {page.path}
               </span>
             </div>
             <iframe
               ref={frame}
-              src={FOREIGN_PAGE}
-              title="Northwind Support Desk — a third-party page"
+              src={page.path}
+              title={`${page.title} — a third-party page`}
               className="h-[720px] w-full border-0 bg-white"
             />
           </div>
 
           <div className="flex flex-col gap-5 lg:col-span-2">
             <section className="rounded-xl border border-[color:var(--color-hairline)] bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-semibold">What it should find</h2>
+              <h2 className="text-sm font-semibold">{page.heading}</h2>
               <p className="mt-1 text-xs text-[color:var(--color-ink-muted)]">
-                Nine tools from a page in a domain the risk lexicon was never tuned for. The two that can cost
-                the user something are the two that stop.
+                Nothing in the risk lexicon was tuned for this domain. The tools that can cost the user
+                something are the ones that stop at the dialog.
               </p>
               <ul className="mt-3 space-y-2">
-                {EXPECTED.map((tool) => (
+                {page.tools.map((tool) => (
                   <li key={tool.name} className="flex flex-col gap-1 rounded-lg bg-black/[0.02] px-2.5 py-2">
                     <span className="flex items-center gap-2">
                       <code className="flex-1 break-all font-mono text-[11.5px]">{tool.name}</code>
@@ -158,10 +239,7 @@ export default function ForeignPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-[11px] text-[color:var(--color-ink-muted)]">
-                Six tickets are in that table, and there is still exactly one <code>refund_order_for_ticket</code>
-                : the ticket id is a parameter, discovered from <code>&lt;th scope=&quot;row&quot;&gt;</code>.
-              </p>
+              <p className="mt-3 text-[11px] text-[color:var(--color-ink-muted)]">{page.footnote}</p>
             </section>
 
             <section className="rounded-xl border border-[color:var(--color-hairline)] bg-white p-4 shadow-sm">

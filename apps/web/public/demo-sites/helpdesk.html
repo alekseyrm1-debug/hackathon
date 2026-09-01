@@ -5,14 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Northwind Support Desk</title>
 <!--
-  A third-party page. It is not part of ToolFence and contains no reference to
-  it: no script tag, no data attribute, no hook. Different framework (none),
-  different CSS (hand-written, light), different naming conventions, written to
-  look like software somebody else shipped.
-
-  What it does share with any decent web app is accessible markup: labelled
-  controls, a table with <th scope="row">, aria-labels on the row buttons. That
-  is the whole contract ToolFence asks for.
+  Northwind Support Desk — internal ticket queue.
+  Static page, no framework, hand-written CSS. Markup rules for this codebase:
+  every control has a <label>, every row action has an aria-label naming the
+  ticket it belongs to, and the table identifies its rows with <th scope="row">.
 -->
 <style>
   :root {

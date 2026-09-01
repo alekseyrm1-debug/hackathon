@@ -106,3 +106,40 @@ describe("scan", () => {
     expect(result.candidates).toEqual([]);
   });
 });
+
+describe("grids that are not tables", () => {
+  it("reads rows and cells declared with ARIA roles instead of table tags", () => {
+    const doc = fragmentDocument(`
+      <div role="grid" aria-label="Servers">
+        <div role="row">
+          <span role="columnheader">Host</span>
+          <span role="columnheader">Region</span>
+          <span role="columnheader">Actions</span>
+        </div>
+        <div role="row">
+          <span role="rowheader">web-01</span>
+          <span role="gridcell">eu-west</span>
+          <span role="gridcell"><a href="#" role="button" aria-label="Restart web-01">Restart</a></span>
+        </div>
+        <div role="row">
+          <span role="rowheader">web-02</span>
+          <span role="gridcell">us-east</span>
+          <span role="gridcell"><a href="#" role="button" aria-label="Restart web-02">Restart</a></span>
+        </div>
+      </div>
+    `);
+
+    const result = scan(doc);
+    const collection = result.candidates.find((candidate) => candidate.kind === "collection");
+
+    expect(collection?.collection?.rowCount).toBe(2);
+    expect(collection?.collection?.keyLabel).toBe("Host");
+    expect(collection?.collection?.sampleKeys).toEqual(["web-01", "web-02"]);
+
+    // The two anchors collapse into one row action, keyed by the host column.
+    const actions = result.candidates.filter((candidate) => candidate.kind === "row-action");
+    expect(actions).toHaveLength(1);
+    expect(actions[0].label).toBe("Restart");
+    expect(result.skipped).toEqual([]);
+  });
+});

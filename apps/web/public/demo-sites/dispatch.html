@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Halden Freight — Dispatch Board</title>
+<!--
+  Halden Freight — dispatch board.
+  No framework. The board is an ARIA grid of divs rather than an HTML table, and
+  the row actions are anchors with role="button", which is how the rest of this
+  system is written. Every control is labelled and every row action names its
+  load, because the terminal staff run this board with a screen reader.
+-->
+<style>
+  :root {
+    --bg: #0d1117; --panel: #151b24; --line: #232c39; --ink: #d8e0ec;
+    --dim: #7d8ba1; --amber: #d99b34; --red: #e0574a; --green: #4ba97a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .bar { display: flex; align-items: baseline; gap: 12px; padding: 10px 18px; border-bottom: 1px solid var(--line); }
+  .bar strong { font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
+  .bar span { color: var(--dim); font-size: 11px; }
+  main { max-width: 1040px; margin: 0 auto; padding: 16px 18px 48px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); margin-bottom: 14px; }
+  .panel > h2 { margin: 0; padding: 9px 14px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line); }
+  .panel > .body { padding: 14px; }
+  .status { margin: 0 0 14px; padding: 8px 12px; border-left: 2px solid var(--amber); background: #1a212c; color: var(--dim); }
+  .controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 14px; }
+  .ctl { display: flex; flex-direction: column; gap: 4px; }
+  .ctl label { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+  input, select {
+    font: inherit; color: var(--ink); background: #0f151d; border: 1px solid var(--line);
+    padding: 5px 8px; min-width: 180px;
+  }
+  [role="grid"] { border-top: 1px solid var(--line); }
+  [role="row"] { display: grid; grid-template-columns: 118px 1.4fr 1fr 92px 96px 220px; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); align-items: center; }
+  [role="columnheader"] { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+  [role="rowheader"] { color: #fff; }
+  .st { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+  .st.rolling { color: var(--green); } .st.held { color: var(--amber); }
+  .st.cancelled, .st.delayed { color: var(--red); }
+  .acts { display: flex; gap: 6px; }
+  a[role="button"], button {
+    font: inherit; font-size: 11px; text-decoration: none; cursor: pointer;
+    color: var(--ink); background: #1c2431; border: 1px solid var(--line); padding: 4px 8px;
+  }
+  a[role="button"]:hover, button:hover { border-color: #3b485c; }
+  a.danger, button.danger { color: var(--red); border-color: #4a2c2a; }
+  button.go { color: #0d1117; background: var(--green); border-color: var(--green); }
+  dl { display: flex; gap: 34px; margin: 0; }
+  dt { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+  dd { margin: 4px 0 0; font-size: 22px; color: #fff; }
+  form.book { display: grid; grid-template-columns: 1fr 1fr 150px auto; gap: 12px; align-items: end; }
+  footer { color: var(--dim); font-size: 11px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>Halden Freight</strong>
+  <span>Dispatch board · terminal 4 · shift B</span>
+</div>
+
+<main>
+  <p class="status" id="status" role="status">Board synced.</p>
+
+  <section class="panel" aria-labelledby="board-heading">
+    <h2 id="board-heading">Active loads</h2>
+    <div class="body">
+      <div class="controls">
+        <div class="ctl">
+          <label for="q">Search loads</label>
+          <input type="search" id="q" placeholder="carrier or destination">
+        </div>
+        <div class="ctl">
+          <label for="lane">Filter by lane</label>
+          <select id="lane">
+            <option value="all">All lanes</option>
+            <option value="north">Northbound</option>
+            <option value="south">Southbound</option>
+            <option value="export">Export</option>
+          </select>
+        </div>
+        <button type="button" id="purge" class="danger" aria-label="Cancel all delayed shipments">
+          Cancel all delayed shipments
+        </button>
+      </div>
+
+      <div role="grid" aria-label="Active loads">
+        <div role="row">
+          <span role="columnheader">Load</span>
+          <span role="columnheader">Carrier</span>
+          <span role="columnheader">Destination</span>
+          <span role="columnheader">Lane</span>
+          <span role="columnheader">Status</span>
+          <span role="columnheader">Actions</span>
+        </div>
+        <div id="rows"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="book-heading">
+    <h2 id="book-heading">Book a load</h2>
+    <div class="body">
+      <form class="book" id="book" method="post" action="/dispatch/loads">
+        <div class="ctl">
+          <label for="carrier">Carrier</label>
+          <input id="carrier" name="carrier" required>
+        </div>
+        <div class="ctl">
+          <label for="destination">Destination</label>
+          <input id="destination" name="destination" required>
+        </div>
+        <div class="ctl">
+          <label for="book-lane">Lane</label>
+          <select id="book-lane" name="lane">
+            <option value="north">Northbound</option>
+            <option value="south">Southbound</option>
+            <option value="export">Export</option>
+          </select>
+        </div>
+        <button type="submit" class="go">Book load</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="totals-heading">
+    <h2 id="totals-heading">Shift totals</h2>
+    <div class="body">
+      <dl aria-label="Shift totals">
+        <div><dt>Loads rolling</dt><dd id="fig-rolling">0</dd></div>
+        <div><dt>Delayed</dt><dd id="fig-delayed">0</dd></div>
+        <div><dt>Carrier payouts</dt><dd id="fig-paid">$0</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <footer>Halden Freight Systems · internal dispatch · not a real company</footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var seq = 4130;
+  var loads = [
+    { id: "HF-4118", carrier: "Kestrel Haulage",  dest: "Gothenburg",  lane: "export", status: "rolling",   rate: 3200 },
+    { id: "HF-4116", carrier: "Vantage Lines",    dest: "Rotterdam",   lane: "export", status: "held",      rate: 4150 },
+    { id: "HF-4111", carrier: "Sable Transport",  dest: "Bremen",      lane: "north",  status: "rolling",   rate: 1980 },
+    { id: "HF-4107", carrier: "Orsted Freight",   dest: "Lyon",        lane: "south",  status: "delayed",   rate: 2740 },
+    { id: "HF-4102", carrier: "Kestrel Haulage",  dest: "Aarhus",      lane: "north",  status: "rolling",   rate: 1450 },
+    { id: "HF-4098", carrier: "Meridian Cargo",   dest: "Porto",       lane: "south",  status: "delayed",   rate: 3610 }
+  ];
+  var paid = 0;
+
+  var rows = document.getElementById("rows");
+  var status = document.getElementById("status");
+  var search = document.getElementById("q");
+  var lane = document.getElementById("lane");
+
+  function say(text) { status.textContent = text; }
+
+  function money(value) { return "$" + value.toLocaleString("en-US"); }
+
+  function visible() {
+    var term = search.value.trim().toLowerCase();
+    var pick = lane.value;
+    return loads.filter(function (load) {
+      if (pick !== "all" && load.lane !== pick) return false;
+      if (!term) return true;
+      return (load.carrier + " " + load.dest).toLowerCase().indexOf(term) !== -1;
+    });
+  }
+
+  function cell(text, role) {
+    var span = document.createElement("span");
+    span.setAttribute("role", role || "gridcell");
+    span.textContent = text;
+    return span;
+  }
+
+  // The row actions are links, not buttons — this board was written by someone
+  // who styles anchors and never reached for <button>.
+  function action(label, text, danger, handler) {
+    var link = document.createElement("a");
+    link.href = "#";
+    link.setAttribute("role", "button");
+    link.setAttribute("aria-label", label);
+    link.textContent = text;
+    if (danger) link.className = "danger";
+    link.addEventListener("click", function (event) { event.preventDefault(); handler(); });
+    return link;
+  }
+
+  function render() {
+    rows.textContent = "";
+    var list = visible();
+
+    if (list.length === 0) {
+      var blank = document.createElement("div");
+      blank.setAttribute("role", "row");
+      blank.appendChild(cell("No loads match the current filter."));
+      rows.appendChild(blank);
+    }
+
+    list.forEach(function (load) {
+      var row = document.createElement("div");
+      row.setAttribute("role", "row");
+
+      var head = document.createElement("span");
+      head.setAttribute("role", "rowheader");
+      head.textContent = load.id;
+      row.appendChild(head);
+
+      row.appendChild(cell(load.carrier));
+      row.appendChild(cell(load.dest));
+      row.appendChild(cell(load.lane));
+
+      var st = document.createElement("span");
+      st.setAttribute("role", "gridcell");
+      st.className = "st " + load.status;
+      st.textContent = load.status;
+      row.appendChild(st);
+
+      var acts = document.createElement("span");
+      acts.setAttribute("role", "gridcell");
+      var group = document.createElement("span");
+      group.className = "acts";
+
+      group.appendChild(action("Track load " + load.id, "Track", false, function () {
+        say(load.id + " — " + load.carrier + " to " + load.dest + " (" + load.status + ").");
+      }));
+
+      group.appendChild(action("Hold load " + load.id, "Hold", false, function () {
+        load.status = "held";
+        say(load.id + " placed on hold.");
+        render();
+      }));
+
+      group.appendChild(action("Transfer load " + load.id + " to another carrier", "Transfer", true, function () {
+        load.carrier = "Meridian Cargo";
+        say(load.id + " transferred to Meridian Cargo.");
+        render();
+      }));
+
+      group.appendChild(action("Pay carrier for load " + load.id, "Pay", true, function () {
+        paid += load.rate;
+        say("Paid " + money(load.rate) + " to " + load.carrier + " for " + load.id + ".");
+        render();
+      }));
+
+      acts.appendChild(group);
+      row.appendChild(acts);
+      rows.appendChild(row);
+    });
+
+    document.getElementById("fig-rolling").textContent = loads.filter(function (l) {
+      return l.status === "rolling";
+    }).length;
+    document.getElementById("fig-delayed").textContent = loads.filter(function (l) {
+      return l.status === "delayed";
+    }).length;
+    document.getElementById("fig-paid").textContent = money(paid);
+  }
+
+  search.addEventListener("input", render);
+  lane.addEventListener("change", render);
+
+  document.getElementById("purge").addEventListener("click", function () {
+    var before = loads.length;
+    loads = loads.filter(function (l) { return l.status !== "delayed"; });
+    say("Cancelled " + (before - loads.length) + " delayed shipment(s).");
+    render();
+  });
+
+  document.getElementById("book").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    seq += 1;
+    loads.unshift({
+      id: "HF-" + seq,
+      carrier: form.carrier.value || "Unassigned",
+      dest: form.destination.value || "(no destination)",
+      lane: form.lane.value,
+      status: "held",
+      rate: 2000
+    });
+    form.reset();
+    say("Booked load HF-" + seq + ".");
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

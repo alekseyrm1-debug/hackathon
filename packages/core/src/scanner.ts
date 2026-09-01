@@ -172,9 +172,19 @@ function detectKeyColumn(rows: readonly Element[], columns: readonly CollectionC
   return columns[0]?.index ?? 0;
 }
 
+// A row is a <tr> or anything carrying role="row", because plenty of real
+// dashboards build their grid out of <div>s. Likewise a data cell is a <td>, a
+// role="cell" (ARIA table) or a role="gridcell" (ARIA grid).
+const ROW_SELECTOR = "tr, [role='row']";
+
+function isDataCell(cell: Element): boolean {
+  const role = cell.getAttribute("role");
+  return cell.tagName === "TD" || role === "cell" || role === "gridcell";
+}
+
 export function headerRowCells(table: Element): Element[] {
-  const thead = table.querySelector("thead");
-  const headerRow = thead?.querySelector("tr") ?? table.querySelector("tr");
+  const thead = table.querySelector("thead, [role='rowgroup'][data-header]");
+  const headerRow = thead?.querySelector(ROW_SELECTOR) ?? table.querySelector(ROW_SELECTOR);
   if (!headerRow) return [];
   const cells = Array.from(headerRow.children).filter(
     (cell) => cell.tagName === "TH" || cell.getAttribute("role") === "columnheader",
@@ -185,9 +195,9 @@ export function headerRowCells(table: Element): Element[] {
 export function bodyRows(table: Element): Element[] {
   const tbody = table.querySelector("tbody");
   const scope = tbody ?? table;
-  return Array.from(scope.querySelectorAll("tr")).filter((row) => {
+  return Array.from(scope.querySelectorAll(ROW_SELECTOR)).filter((row) => {
     if (row.closest("thead")) return false;
-    return Array.from(row.children).some((cell) => cell.tagName === "TD" || cell.getAttribute("role") === "cell");
+    return Array.from(row.children).some(isDataCell);
   });
 }
 
@@ -269,6 +279,10 @@ export function stripRowIdentity(rawName: string, key: string, row: Element): st
   const tokens = new Set<string>();
   if (key) tokens.add(key);
   for (const cell of Array.from(row.children)) {
+    // The cell holding the buttons describes the actions, not the row. On a
+    // grid with one action per row its text *is* the button label, and
+    // stripping it would erase the very name we are trying to keep.
+    if (cell.querySelector("button, [role='button'], a[href]")) continue;
     const text = visibleText(cell, 60);
     if (text && text.length > 2 && text.split(" ").length <= 4) tokens.add(text);
   }
