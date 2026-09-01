@@ -2,7 +2,7 @@
 
 **Tagline:** Turn any web app into WebMCP tools — and never let a dangerous tool run without the user's consent.
 
-**Live demo:** _(deployment URL — see DEPLOY.md)_ · **Repository:** https://github.com/alekseyrm1-debug/hackathon · **Licence:** MIT
+**Live demo:** https://toolfence-omega.vercel.app/playground · **Repository:** https://github.com/alekseyrm1-debug/hackathon · **Licence:** MIT
 
 ---
 

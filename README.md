@@ -6,6 +6,9 @@ ToolFence reads a page's accessibility tree, generates working WebMCP tools at r
 generated tool behind a capability firewall that classifies it as `read`, `write` or `destructive` and
 stops the destructive ones at a consent dialog.
 
+**[Live demo →](https://toolfence-omega.vercel.app/playground)** · no API key, no sign-in,
+works in an ordinary browser.
+
 ![The playground: an ordinary invoices dashboard on the left, the tools ToolFence generated from it on the right](docs/screenshots/02-playground.png)
 
 ---

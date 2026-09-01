@@ -1,5 +1,8 @@
 # Deploying ToolFence to Vercel
 
+**Currently deployed at https://toolfence-omega.vercel.app** (project `toolfence`, production
+branch `claude/hackathon-2026-top-10-wz1vg2`). Every push to that branch redeploys automatically.
+
 The repository is an npm workspace. `apps/web` is the deployable Next.js app; `packages/core` is
 compiled in place by `transpilePackages`, so there is no build step to add and no package to publish.
 
@@ -80,8 +83,13 @@ not supported only because that route exists; delete it and the app is static.
 
 ## Troubleshooting
 
+Two of these were hit for real while deploying this project, and both are fixed in the repository —
+they are listed so the cause is obvious if you fork it and reintroduce one.
+
 | Symptom | Cause | Fix |
 |---|---|---|
+| `Module not found: Can't resolve '@/components/...'` — compiles locally, fails on Vercel | The `@/*` tsconfig path alias is not resolved identically in both environments | Already fixed: the app uses relative imports and declares no `paths` |
+| `next build` prints `✓ Compiled successfully`, then exits 1 at "Linting and checking validity of types" with no error | Vercel installs only `apps/web`'s dependencies, so a `typescript` declared solely at the workspace root is missing | Already fixed: `typescript` and `@types/node` are declared in `apps/web/package.json` |
 | `Module not found: @toolfence/core` | Root Directory set to the repo root, or files outside the root excluded | Set Root Directory to `apps/web` and enable including files outside it |
 | Build fails resolving `./scanner` | An install that skipped workspaces | Delete the Vercel build cache and redeploy |
 | Tool count is 0 on the deployed site | The app root selector did not match | Confirm `InvoiceApp` still renders `id="invoice-app"`; `useToolFence("#invoice-app")` scans that subtree |
