@@ -5,7 +5,7 @@
 import type { BoundTool, Capability, JsonSchemaProperty, ToolResult } from "@toolfence/core";
 import { useMemo, useState } from "react";
 import type { ToolFenceController } from "./useToolFence";
-import { Button, CapabilityBadge, Card, SectionTitle } from "./ui";
+import { Button, CapabilityBadge, Card, ChipButton, SectionTitle } from "./ui";
 
 const CAPABILITY_ORDER: readonly Capability[] = ["read", "write", "destructive"];
 
@@ -91,18 +91,11 @@ function FilterChip({
   onClick: () => void;
   children: React.ReactNode;
 }) {
+  // A held-down key is the honest picture of a filter that is switched on.
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-        active
-          ? "bg-[color:var(--color-ink)] text-white"
-          : "text-[color:var(--color-ink-muted)] hover:bg-slate-100"
-      }`}
-    >
+    <ChipButton active={active} onClick={onClick}>
       {children}
-    </button>
+    </ChipButton>
   );
 }
 
@@ -151,7 +144,7 @@ function ToolCard({ tool }: { tool: BoundTool }) {
             {schema.description}
           </p>
         </div>
-        <Button variant="secondary" onClick={() => setOpen((current) => !current)}>
+        <Button variant="secondary" size="sm" onClick={() => setOpen((current) => !current)}>
           {open ? "Hide" : "Inspect"}
         </Button>
       </div>
@@ -203,6 +196,7 @@ function ToolCard({ tool }: { tool: BoundTool }) {
             <div className="mt-2.5 flex items-center gap-2">
               <Button
                 variant={schema.capability === "destructive" ? "danger" : "primary"}
+                size="sm"
                 onClick={() => void run()}
                 disabled={busy}
               >

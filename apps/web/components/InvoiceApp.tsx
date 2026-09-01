@@ -4,7 +4,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { money } from "./ui";
+import { money, softKey } from "./ui";
 
 // Fixed ids (not useId) so that <label for> associations — and therefore the
 // selectors ToolFence derives from them — stay stable across re-renders.
@@ -288,7 +288,7 @@ export function InvoiceApp() {
             <button
               type="button"
               onClick={() => setSelected(null)}
-              className="rounded-lg px-2 py-1 text-xs font-medium text-[color:var(--color-ink-muted)] hover:bg-slate-100"
+              className={softKey("ghost", "sm")}
             >
               Close details
             </button>
@@ -345,10 +345,7 @@ export function InvoiceApp() {
               className="rounded-lg border border-[color:var(--color-hairline)] bg-white px-3 py-1.5 text-sm outline-none"
             />
           </Field>
-          <button
-            type="submit"
-            className="rounded-lg bg-[color:var(--color-brand)] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-800"
-          >
+          <button type="submit" className={softKey("primary")}>
             Create invoice
           </button>
         </div>
@@ -435,15 +432,13 @@ function RowButton({
   tone?: "danger";
 }) {
   return (
+    // Three of these sit side by side in every row, so each one carries its own
+    // mould — that is what keeps "Pay" from bleeding into "Delete" at a glance.
     <button
       type="button"
       aria-label={label}
       onClick={onClick}
-      className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-        tone === "danger"
-          ? "text-[color:var(--color-destructive)] hover:bg-[color:var(--color-destructive-soft)]"
-          : "text-[color:var(--color-ink-muted)] hover:bg-slate-100 hover:text-[color:var(--color-ink)]"
-      }`}
+      className={softKey(tone === "danger" ? "danger" : "secondary", "sm")}
     >
       {children}
     </button>

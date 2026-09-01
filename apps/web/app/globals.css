@@ -64,3 +64,240 @@ body {
   background-image: radial-gradient(48rem 22rem at 50% -7rem, rgba(67, 56, 202, 0.09), transparent 70%);
   background-repeat: no-repeat;
 }
+
+/* ---------------------------------------------------------------------------
+   Soft controls.
+
+   Every button in the product is a physical key rather than a coloured
+   rectangle: a face with a light rim along its top edge, an ambient shadow
+   underneath that says how far it stands off the canvas, and a press that
+   actually sinks the face into the surface. The rim is the mould — it is what
+   lets the eye read each button as its own object even when three of them sit
+   side by side in a table row.
+
+   One recipe, four variants. Nothing here is decorative for its own sake:
+   depth encodes hierarchy (primary stands highest, ghost barely at all) and
+   the press is the only feedback a pointer or a thumb ever gets. */
+
+:root {
+  /* Ambient + contact shadow, at two heights. */
+  --tf-lift: 0 1px 1px rgba(16, 24, 40, 0.04), 0 2px 4px -2px rgba(16, 24, 40, 0.08),
+    0 6px 14px -8px rgba(16, 24, 40, 0.16);
+  --tf-lift-hover: 0 1px 1px rgba(16, 24, 40, 0.05), 0 4px 8px -3px rgba(16, 24, 40, 0.1),
+    0 14px 24px -12px rgba(16, 24, 40, 0.24);
+  /* The sunk face. Applied on :active, and on a chip that stays selected. */
+  --tf-sink: inset 0 2px 4px rgba(16, 24, 40, 0.16), inset 0 1px 1px rgba(16, 24, 40, 0.1);
+  --tf-ease: cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.tf-key {
+  position: relative;
+  border-radius: 10px;
+  font-weight: 500;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms var(--tf-ease), box-shadow 140ms var(--tf-ease),
+    background-color 140ms var(--tf-ease), color 140ms var(--tf-ease);
+}
+
+.tf-key:hover:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(-1px);
+}
+
+/* The press: the face drops and its own shadow is replaced by the sunk one,
+   fast enough (60ms) that the finger feels it as contact, not as animation. */
+.tf-key:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(1px);
+  transition-duration: 60ms;
+}
+
+.tf-key:disabled,
+.tf-key[aria-disabled="true"] {
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* -- Primary: the one key with real colour, so it also stands highest. ----- */
+.tf-key--primary {
+  color: #fff;
+  background-image: linear-gradient(180deg, #5b4fdd 0%, var(--color-brand) 52%, #382cb0 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(16, 24, 40, 0.24),
+    0 0 0 1px rgba(46, 36, 138, 0.55), var(--tf-lift), 0 8px 18px -10px rgba(67, 56, 202, 0.65);
+}
+
+.tf-key--primary:hover:not(:disabled) {
+  background-image: linear-gradient(180deg, #6659e6 0%, #4a3ed4 52%, #3a2eb8 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 -1px 0 rgba(16, 24, 40, 0.24),
+    0 0 0 1px rgba(46, 36, 138, 0.55), var(--tf-lift-hover), 0 14px 26px -12px rgba(67, 56, 202, 0.7);
+}
+
+.tf-key--primary:active:not(:disabled) {
+  background-image: linear-gradient(180deg, #3a2eb8 0%, #3d31bd 100%);
+  box-shadow: var(--tf-sink), 0 0 0 1px rgba(46, 36, 138, 0.6);
+}
+
+.tf-key--primary:disabled {
+  background-image: none;
+  background-color: #e4e7ec;
+  color: #98a2b3;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 0 0 1px rgba(16, 24, 40, 0.06);
+}
+
+/* -- Secondary: a white keycap. The workhorse. ---------------------------- */
+.tf-key--secondary {
+  color: var(--color-ink);
+  background-image: linear-gradient(180deg, #ffffff 0%, #f4f5f7 100%);
+  box-shadow: inset 0 1px 0 #ffffff, inset 0 -1px 0 rgba(16, 24, 40, 0.05),
+    0 0 0 1px var(--color-hairline), var(--tf-lift);
+}
+
+.tf-key--secondary:hover:not(:disabled) {
+  background-image: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  box-shadow: inset 0 1px 0 #ffffff, inset 0 -1px 0 rgba(16, 24, 40, 0.05),
+    0 0 0 1px #d7dbe2, var(--tf-lift-hover);
+}
+
+.tf-key--secondary:active:not(:disabled) {
+  background-image: linear-gradient(180deg, #eceef2 0%, #f2f4f7 100%);
+  box-shadow: var(--tf-sink), 0 0 0 1px #d0d5dd;
+}
+
+.tf-key--secondary:disabled {
+  background-image: none;
+  background-color: #f8f9fb;
+  color: #98a2b3;
+  box-shadow: 0 0 0 1px var(--color-hairline);
+}
+
+/* -- Ghost: the mould is still there, only shallower. --------------------- */
+.tf-key--ghost {
+  color: var(--color-ink-muted);
+  background-color: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(16, 24, 40, 0.07);
+}
+
+.tf-key--ghost:hover:not(:disabled) {
+  color: var(--color-ink);
+  background-color: #ffffff;
+  box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(16, 24, 40, 0.1), var(--tf-lift);
+}
+
+.tf-key--ghost:active:not(:disabled) {
+  background-color: #eef0f4;
+  box-shadow: var(--tf-sink), 0 0 0 1px rgba(16, 24, 40, 0.1);
+}
+
+.tf-key--ghost:disabled {
+  color: #98a2b3;
+  background-color: transparent;
+  box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.05);
+}
+
+/* -- Danger: a white key with a rose mould, never a red slab. The colour is
+      a warning, not an invitation to press it. ---------------------------- */
+.tf-key--danger {
+  color: var(--color-destructive);
+  background-image: linear-gradient(180deg, #ffffff 0%, #fff5f6 100%);
+  box-shadow: inset 0 1px 0 #ffffff, inset 0 -1px 0 rgba(190, 18, 60, 0.08),
+    0 0 0 1px #fecdd3, var(--tf-lift);
+}
+
+.tf-key--danger:hover:not(:disabled) {
+  background-image: linear-gradient(180deg, #fffafa 0%, #ffeef0 100%);
+  box-shadow: inset 0 1px 0 #ffffff, inset 0 -1px 0 rgba(190, 18, 60, 0.1),
+    0 0 0 1px #fda4af, var(--tf-lift-hover);
+}
+
+.tf-key--danger:active:not(:disabled) {
+  background-image: linear-gradient(180deg, #ffe4e6 0%, #fff1f2 100%);
+  box-shadow: var(--tf-sink), 0 0 0 1px #fda4af;
+}
+
+.tf-key--danger:disabled {
+  background-image: none;
+  background-color: #fff7f7;
+  color: #d3a1a9;
+  box-shadow: 0 0 0 1px #fee2e4;
+}
+
+/* -- Chip: a pill-shaped key that can also stay pressed (a filter that is on
+      reads as a key held down, which is exactly what it is). -------------- */
+.tf-key--chip {
+  border-radius: 999px;
+  color: var(--color-ink-muted);
+  background-image: linear-gradient(180deg, #ffffff 0%, #f4f5f7 100%);
+  box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px var(--color-hairline), var(--tf-lift);
+}
+
+.tf-key--chip:hover:not(:disabled) {
+  color: var(--color-ink);
+  box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px #d7dbe2, var(--tf-lift-hover);
+}
+
+.tf-key--chip[aria-pressed="true"] {
+  color: #fff;
+  background-image: linear-gradient(180deg, #2c3644 0%, var(--color-ink) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 2px 5px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(16, 24, 40, 0.9);
+  transform: translateY(1px);
+}
+
+.tf-key--chip[aria-pressed="true"]:hover {
+  color: #fff;
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 2px 5px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(16, 24, 40, 0.9);
+}
+
+.tf-key--chip:active:not(:disabled) {
+  box-shadow: var(--tf-sink), 0 0 0 1px #d0d5dd;
+}
+
+/* -- A whole row that behaves like a key (the audit-log disclosure). ------- */
+.tf-key--row {
+  border-radius: 10px;
+  background-color: transparent;
+  box-shadow: 0 0 0 1px transparent;
+}
+
+.tf-key--row:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 #ffffff, 0 0 0 1px rgba(16, 24, 40, 0.08), var(--tf-lift);
+}
+
+.tf-key--row:active {
+  background-color: #f2f4f7;
+  box-shadow: var(--tf-sink);
+}
+
+/* Fields get the opposite treatment: pressed in, so they read as somewhere to
+   put something rather than something to press. */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.9);
+  transition: box-shadow 140ms var(--tf-ease), border-color 140ms var(--tf-ease);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):hover,
+select:hover,
+textarea:hover {
+  border-color: #d0d5dd;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-brand);
+}
+
+/* The lift and the sink are motion. Colour and rim are not, so a reduced-motion
+   user still sees every mould and every state — just without the travel. */
+@media (prefers-reduced-motion: reduce) {
+  .tf-key,
+  .tf-key:hover:not(:disabled),
+  .tf-key:active:not(:disabled),
+  .tf-key--chip[aria-pressed="true"] {
+    transform: none;
+    transition: none;
+  }
+}

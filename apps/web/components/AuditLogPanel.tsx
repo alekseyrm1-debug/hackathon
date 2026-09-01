@@ -41,10 +41,10 @@ export function AuditLogPanel({ controller }: { controller: ToolFenceController 
         detail={`${log.length} call(s) recorded · ${denied} stopped`}
         right={
           <div className="flex shrink-0 gap-2">
-            <Button variant="ghost" onClick={controller.clearLog} disabled={log.length === 0}>
+            <Button variant="ghost" size="sm" onClick={controller.clearLog} disabled={log.length === 0}>
               Clear
             </Button>
-            <Button variant="secondary" onClick={() => downloadLog(log)} disabled={log.length === 0}>
+            <Button variant="secondary" size="sm" onClick={() => downloadLog(log)} disabled={log.length === 0}>
               Export JSON
             </Button>
           </div>
@@ -93,7 +93,7 @@ export function AuditLogPanel({ controller }: { controller: ToolFenceController 
             <span className="text-xs text-[color:var(--color-ink)]">
               Session grants: {grants.map((name) => name).join(", ")}
             </span>
-            <Button variant="ghost" onClick={controller.revokeGrants}>
+            <Button variant="ghost" size="sm" onClick={controller.revokeGrants}>
               Revoke
             </Button>
           </div>
@@ -120,11 +120,11 @@ function LogRow({ entry }: { entry: AuditEntry }) {
   const hasArgs = Object.keys(entry.args).length > 0;
 
   return (
-    <li className="px-4 py-2.5">
+    <li className="px-2 py-1">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full flex-wrap items-center gap-2 text-left"
+        className="tf-key tf-key--row flex w-full flex-wrap items-center gap-2 px-2 py-1.5 text-left"
       >
         <span className="font-mono text-[11px] tabular-nums text-[color:var(--color-ink-muted)]">
           {formatTime(entry.at)}
@@ -141,7 +141,7 @@ function LogRow({ entry }: { entry: AuditEntry }) {
         </span>
       </button>
       {open ? (
-        <div className="tf-rise mt-2 space-y-1.5">
+        <div className="tf-rise mt-2 space-y-1.5 px-2 pb-1">
           <p className="text-xs leading-relaxed text-[color:var(--color-ink-muted)]">{entry.message}</p>
           {hasArgs ? (
             <pre className="max-h-40 overflow-auto rounded-lg bg-slate-950 px-3 py-2 font-mono text-[11px] leading-relaxed text-slate-100">

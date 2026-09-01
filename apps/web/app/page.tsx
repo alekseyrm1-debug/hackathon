@@ -1,5 +1,6 @@
 // Landing page: the claim, the problem, the pipeline, and how to try it.
 import Link from "next/link";
+import { softKey } from "../components/ui";
 
 const PIPELINE = [
   {
@@ -59,10 +60,7 @@ export default function LandingPage() {
             </span>
             ToolFence
           </span>
-          <Link
-            href="/playground"
-            className="rounded-lg bg-[color:var(--color-brand)] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-800"
-          >
+          <Link href="/playground" className={softKey("primary", "sm")}>
             Open the playground
           </Link>
         </div>
@@ -83,15 +81,12 @@ export default function LandingPage() {
             consent dialog that shows the user exactly what the agent is about to do.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link
-              href="/playground"
-              className="rounded-lg bg-[color:var(--color-brand)] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-800"
-            >
+            <Link href="/playground" className={`${softKey("primary")} px-5 py-2.5`}>
               Try the live demo
             </Link>
             <a
               href="https://github.com/alekseyrm1-debug/hackathon"
-              className="rounded-lg bg-white px-4 py-2.5 text-sm font-medium ring-1 ring-inset ring-[color:var(--color-hairline)] transition-colors hover:bg-slate-50"
+              className={`${softKey("secondary")} px-5 py-2.5`}
             >
               Read the source
             </a>

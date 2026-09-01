@@ -32,31 +32,49 @@ export function CapabilityBadge({ capability }: { capability: Capability }) {
   );
 }
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+export type ButtonSize = "sm" | "md";
 
-const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary:
-    "bg-[color:var(--color-brand)] text-white hover:bg-indigo-800 disabled:bg-slate-300 disabled:text-slate-500",
-  secondary:
-    "bg-white text-[color:var(--color-ink)] ring-1 ring-inset ring-[color:var(--color-hairline)] hover:bg-slate-50 disabled:text-slate-400",
-  ghost: "text-[color:var(--color-ink-muted)] hover:bg-slate-100 hover:text-[color:var(--color-ink)]",
-  danger:
-    "bg-white text-[color:var(--color-destructive)] ring-1 ring-inset ring-rose-200 hover:bg-[color:var(--color-destructive-soft)]",
+const BUTTON_SIZES: Record<ButtonSize, string> = {
+  sm: "px-2.5 py-1 text-xs",
+  md: "px-3.5 py-2 text-sm",
 };
+
+/**
+ * The one place a button's look is decided. The mould itself (rim, shadow,
+ * press) lives in `.tf-key*` in globals.css so that a `<Link>` or an `<a>`
+ * acting as a button can wear exactly the same key — see `softKey` below.
+ */
+export function softKey(variant: ButtonVariant | "chip" = "secondary", size: ButtonSize = "md") {
+  return `tf-key tf-key--${variant} inline-flex select-none items-center justify-center gap-1.5 font-medium ${BUTTON_SIZES[size]}`;
+}
 
 // React 19 passes `ref` as an ordinary prop, so no forwardRef wrapper is needed.
 export function Button({
   variant = "secondary",
+  size = "md",
   className = "",
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
+  size?: ButtonSize;
   ref?: React.Ref<HTMLButtonElement>;
 }) {
+  return <button {...props} className={`${softKey(variant, size)} ${className}`} />;
+}
+
+/** A pill-shaped key that can stay held down — filters, segmented choices. */
+export function ChipButton({
+  active,
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { active: boolean }) {
   return (
     <button
+      type="button"
+      aria-pressed={active}
       {...props}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${BUTTON_VARIANTS[variant]} ${className}`}
+      className={`${softKey("chip", "sm")} ${className}`}
     />
   );
 }
@@ -70,7 +88,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-xl bg-[color:var(--color-surface)] shadow-[0_1px_2px_rgba(16,24,40,0.04)] ring-1 ring-[color:var(--color-hairline)] ${className}`}
+      className={`rounded-xl bg-[color:var(--color-surface)] shadow-[0_1px_1px_rgba(16,24,40,0.03),0_2px_6px_-2px_rgba(16,24,40,0.06),0_12px_28px_-16px_rgba(16,24,40,0.18)] ring-1 ring-[color:var(--color-hairline)] ${className}`}
     >
       {children}
     </div>
