@@ -107,7 +107,7 @@ export default function ForeignPage() {
           </a>
           <a
             className={softKey("ghost", "md")}
-            href="https://github.com/alekseyrm1-debug/hackathon/blob/main/apps/web/public/demo-sites/helpdesk.html"
+            href="https://github.com/alekseyrm1-debug/hackathon/blob/HEAD/apps/web/public/demo-sites/helpdesk.html"
             target="_blank"
             rel="noreferrer"
           >
