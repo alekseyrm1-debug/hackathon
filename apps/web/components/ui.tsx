@@ -33,11 +33,12 @@ export function CapabilityBadge({ capability }: { capability: Capability }) {
 }
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-export type ButtonSize = "sm" | "md";
+export type ButtonSize = "sm" | "md" | "lg";
 
 const BUTTON_SIZES: Record<ButtonSize, string> = {
   sm: "px-2.5 py-1 text-xs",
   md: "px-3.5 py-2 text-sm",
+  lg: "px-5 py-2.5 text-sm",
 };
 
 /**
